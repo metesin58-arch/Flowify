@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>FLOW MASTER</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;600&family=Bebas+Neue&family=Black+Ops+One&family=Permanent+Marker&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+    <style>
+        /* --- CSS STYLES --- */
+        :root { --primary: #f1c40f; --danger: #ff004c; --success: #00ff9d; --dark: #121212; --spotify: #1DB954; --glass: rgba(255, 255, 255, 0.05); }
+        * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+        
+        body { 
+            background: #000; color: white; font-family: 'Rajdhani', sans-serif; 
+            margin: 0; display: flex; flex-direction: column; align-items: center; 
+            height: 100dvh; overflow: hidden; 
+        }
+        .hidden { display: none !important; }
+        
+        #app-bg { position: fixed; top:0; left:0; width:100%; height:100%; z-index:-1; background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%); opacity: 0.9; pointer-events: none; }
+
+        /* GİRİŞ EKRANI */
+        #auth-screen { 
+            z-index: 10000; background: #000; width:100%; height:100%; 
+            position:absolute; top:0; left:0; 
+            display:flex; flex-direction:column; align-items:center; justify-content:center;
+            background-image: linear-gradient(rgba(0,0,0,0.8), #000), url('https://images.unsplash.com/photo-1550985543-f4423c8d361e?q=80&w=1000'); 
+            background-size: cover; background-position: center;
+        }
+        .logo-main { font-family:'Black Ops One'; font-size:55px; color:#fff; margin-bottom:5px; text-shadow: 0 0 20px rgba(255,255,255,0.3); letter-spacing: 2px; text-align: center; }
+        .slogan { color: var(--primary); font-size: 14px; letter-spacing: 6px; margin-bottom: 40px; font-weight: bold; text-transform: uppercase; }
+        .auth-box { width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .creator-sign { position: absolute; bottom: 30px; font-family: 'Permanent Marker'; color: #555; font-size: 14px; letter-spacing: 1px; }
+        .btn-start-rap { background: #fff; color: #000; border: none; padding: 20px 40px; font-family: 'Black Ops One'; font-size: 24px; border-radius: 50px; cursor: pointer; box-shadow: 0 0 30px rgba(255,255,255,0.2); transition: 0.2s; text-transform: uppercase; display: flex; align-items: center; gap: 10px; }
+        .btn-start-rap:active { transform: scale(0.95); box-shadow: 0 0 10px rgba(255,255,255,0.1); }
+
+        /* HOŞ GELDİN POPUP */
+        #welcome-screen { z-index: 11000; background: rgba(0,0,0,0.95); width:100%; height:100%; position:absolute; top:0; left:0; display:none; flex-direction:column; align-items:center; justify-content:center; }
+        .welcome-box { width: 85%; max-width: 340px; background: #111; padding: 25px; border-radius: 20px; border: 1px solid #333; text-align: center; box-shadow: 0 0 50px rgba(241, 196, 15, 0.15); }
+        .welcome-box h1 { font-family: 'Black Ops One'; color: var(--primary); font-size: 32px; margin: 0 0 5px 0; }
+        .welcome-box h3 { font-family: 'Rubik', sans-serif; color: white; font-weight: 600; margin: 0 0 15px 0; letter-spacing: 1px; }
+        .welcome-list { list-style: none; padding: 0; margin: 0 0 20px 0; font-family: 'Rubik', sans-serif; text-align: left; }
+        .welcome-list li { background: rgba(255,255,255,0.05); padding: 12px; margin-bottom: 8px; border-radius: 8px; display: flex; align-items: center; font-size: 13px; color: #ccc; border-left: 3px solid var(--primary); }
+        .welcome-list i { color: var(--primary); width: 25px; text-align: center; margin-right: 10px; font-size: 16px; }
+
+        /* OYUN ALANI */
+        #app-container { width: 100%; max-width: 480px; height: 100%; display: flex; flex-direction: column; align-items: center; overflow-y: auto; padding-bottom: 120px; z-index: 1; position: relative; }
+        
+        .ingame-bg-logo {
+            position: absolute; top: 15%; left: 50%; transform: translateX(-50%);
+            font-family: 'Black Ops One'; font-size: 35px; color: rgba(255, 255, 255, 0.2);
+            white-space: nowrap; z-index: 0; pointer-events: none; letter-spacing: 5px;
+            text-shadow: 0 0 20px rgba(255,255,255,0.1);
+        }
+
+        .top-bar { width: 95%; margin-top: 15px; padding: 10px 20px; display: flex; justify-content: space-between; background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; z-index: 10; align-items: center; position: relative; }
+        .stat-box { text-align: center; } .stat-val { font-family: 'Bebas Neue'; font-size: 24px; } .stat-lbl { font-size: 10px; color: #aaa; font-weight: bold; }
+        .gold { color: var(--primary); } .green { color: var(--success); }
+        .online-badge { position: absolute; bottom: -25px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); border: 1px solid var(--success); padding: 2px 10px; border-radius: 10px; font-size: 10px; color: var(--success); display: flex; align-items: center; gap: 5px; box-shadow: 0 0 10px rgba(0,255,157,0.2); }
+        .online-dot { width: 6px; height: 6px; background: var(--success); border-radius: 50%; box-shadow: 0 0 5px var(--success); animation: blink 2s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        #mute-btn { cursor: pointer; padding: 5px; z-index: 20; background: rgba(0,0,0,0.5); border-radius: 50%; width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; border: 1px solid #444; pointer-events: auto; transition: 0.2s; }
+        #mute-btn:active { transform: scale(0.9); }
+
+        /* KARAKTER */
+        .char-area { flex-grow: 1; display: flex; justify-content: center; align-items: center; width: 100%; position: relative; min-height: 350px; margin-top: 20px; z-index: 5; }
+        .char-wrapper { position: relative; width: 200px; height: 320px; transform-origin: top center; transition: 0.3s; transform: scale(0.9); }
+        .part { position: absolute; left: 50%; transform: translateX(-50%); transition: 0.2s; }
+        .voxel { border-left: 10px solid rgba(0,0,0,0.3); border-bottom: 8px solid rgba(0,0,0,0.3); box-sizing: border-box; transform: translateX(calc(-50% - 5px)) !important; }
+        .c-head { width: 130px; top: 30px; z-index: 10; image-rendering: pixelated; filter: drop-shadow(-10px 10px 15px rgba(0,0,0,0.5)); }
+        .c-body { width: 110px; height: 120px; top: 130px; background: #333; border-radius: 15px; z-index: 2; }
+        .c-legs { width: 110px; height: 110px; top: 240px; display: flex; justify-content: space-between; z-index: 1; }
+        .c-leg { width: 48px; height: 100%; background: #222; border-radius: 5px; position: relative; }
+        .c-shoe { width: 54px; height: 30px; background: #fff; position: absolute; bottom: -6px; left: -3px; border-radius: 10px 20px 5px 5px; border-bottom: 8px solid #999; border-left: 6px solid #ccc; z-index: 2; overflow: hidden; }
+        .c-arm { width: 30px; height: 100px; top: 5px; background: #333; border-radius: 8px; position: absolute; z-index: 3; transition: 0.3s; }
+        .arm-l { left: -25px; transform: rotate(5deg); border-left: 10px solid rgba(0,0,0,0.3); border-bottom: 8px solid rgba(0,0,0,0.3); } 
+        .arm-r { right: -25px; transform: rotate(-5deg); border-left: 10px solid rgba(0,0,0,0.3); border-bottom: 8px solid rgba(0,0,0,0.3); }
+        .c-hand { width: 24px; height: 28px; background: #f1c27d; position: absolute; bottom: -20px; left: -10px; border-radius: 0 0 8px 8px; border-left: 6px solid #c08d55; border-bottom: 4px solid #c08d55; }
+        .c-mic { width: 12px; height: 35px; background: #333; position: absolute; bottom: -30px; left: 5px; border-radius: 0 0 5px 5px; z-index: 20; display: none; border-top: 3px solid #555; }
+        .c-mic::after { content:''; position:absolute; top:-15px; left:-4px; width:20px; height:20px; background: radial-gradient(circle, #888, #222); border-radius: 50%; border: 2px solid #111; }
+        .in-battle .c-mic { display: block; } .in-battle .arm-r { transform: rotate(-45deg) translate(-5px, -5px); }
+        .anim-attack { animation: lunge 0.3s ease-out; }
+        @keyframes lunge { 0% {transform: translateX(0);} 50% {transform: translateX(30px);} 100% {transform: translateX(0);} }
+        .anim-hit { animation: shakeRed 0.4s; filter: brightness(2) sepia(1) hue-rotate(-50deg) saturate(5); }
+        @keyframes shakeRed { 0% { transform: translate(1px, 1px) rotate(0deg); } 20% { transform: translate(-3px, 0px) rotate(1deg); } 40% { transform: translate(1px, -1px) rotate(1deg); } 60% { transform: translate(-3px, 1px) rotate(0deg); } 80% { transform: translate(-1px, -1px) rotate(1deg); } 100% { transform: translate(1px, -2px) rotate(-1deg); } }
+
+        .c-chain { width: 70px; height: 60px; top: 140px; border: 8px solid gold; border-top: none; border-radius: 0 0 50px 50px; z-index: 5; display: none; filter: drop-shadow(-2px 4px 0px rgba(0,0,0,0.5)); }
+        .c-hat { width: 120px; height: 50px; top: 20px; background: #c0392b; border-radius: 10px; z-index: 11; display: none; transform: translateX(-50%); border-left: 12px solid rgba(0,0,0,0.2); border-bottom: 5px solid rgba(0,0,0,0.2); }
+        .c-hat::before { content:''; position:absolute; width:45px; height:10px; background:#a93226; bottom:2px; left:-25px; border-radius:10px 0 0 5px; transform:skewY(-20deg); }
+        .c-tank { width: 60px; height: 15px; background: #444; position: absolute; top: -5px; left: 50%; transform: translateX(-50%); border-radius: 0 0 20px 20px; display: none; }
+        .c-string { width: 5px; height: 40px; background: #ddd; position: absolute; top: 5px; border-radius: 2px; border-left: 2px solid #999; } .str-l { left: 35px; rotate: 5deg; } .str-r { right: 35px; rotate: -5deg; }
+        .c-pocket { width: 70px; height: 35px; background: rgba(0,0,0,0.2); position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); border-radius: 10px 10px 0 0; border-top: 2px solid rgba(255,255,255,0.1); border-left: 6px solid rgba(0,0,0,0.2); }
+        @keyframes bounce { 0%, 100% { margin-top: 0px; } 50% { margin-top: 4px; } }
+        .anim-idle .c-body, .anim-idle .c-legs { animation: bounce 0.8s infinite ease-in-out; }
+
+        /* KONTROLLER */
+        #creator-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 95%; background: rgba(20, 20, 20, 0.8); backdrop-filter: blur(20px); padding: 20px; border-radius: 30px 30px 0 0; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; z-index: 10; }
+        .full-col { grid-column: span 2; }
+        .c-btn { background: rgba(255,255,255,0.08); color: #ddd; border: 1px solid rgba(255,255,255,0.1); padding: 15px; font-family: 'Rajdhani'; font-weight: 700; font-size: 16px; cursor: pointer; border-radius: 12px; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; text-transform: uppercase; }
+        .c-btn:active { background: var(--primary); color: #000; border-color: var(--primary); }
+        .btn { width: 100%; padding: 15px; font-family: 'Bebas Neue'; font-size: 20px; border: none; border-radius: 12px; margin-top: 8px; cursor: pointer; transition: 0.2s; }
+        .btn-green { background: var(--success); color: #000; box-shadow: 0 0 15px rgba(0, 255, 157, 0.3); }
+        .btn-red { background: var(--danger); color: #fff; box-shadow: 0 0 15px rgba(255, 0, 76, 0.3); }
+
+        /* ALT MENÜ */
+        .bottom-nav { width: 90%; max-width: 450px; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(10, 10, 10, 0.85); backdrop-filter: blur(20px); padding: 10px 15px; display: flex; justify-content: space-between; border-radius: 25px; border: 1px solid rgba(255,255,255,0.15); z-index: 50; box-shadow: 0 10px 40px rgba(0,0,0,0.8); padding-bottom: 12px; }
+        .nav-item { text-align: center; color: #666; font-size: 10px; cursor: pointer; width: 60px; transition: 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; } 
+        .nav-item i { font-size: 20px; margin-bottom: 4px; transition: 0.2s; } 
+        .nav-item.active { color: white; } 
+        .nav-item.active i { color: var(--primary); transform: translateY(-3px); text-shadow: 0 0 10px var(--primary); }
+        .nav-item:active { transform: scale(0.9); }
+
+        /* MODAL */
+        .modal { position: absolute; top:0; left:0; width:100%; height:100%; background: #000; z-index: 100; display: flex; flex-direction: column; align-items: center; padding-top: env(safe-area-inset-top); }
+        .modal-header { color: var(--primary); border-bottom: 1px solid rgba(255,255,255,0.1); padding: 20px; width: 100%; text-align: center; font-size: 28px; font-family: 'Bebas Neue'; background: rgba(20,20,20,0.9); }
+        .scroll-list { width: 100%; flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; padding-bottom: 100px; }
+        
+        /* MARKET GRID */
+        .market-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 20px; width: 100%; overflow-y: auto; padding-bottom: 150px; }
+        .market-item { background: rgba(30, 30, 30, 0.6); border: 1px solid rgba(255,255,255,0.05); padding: 15px; text-align: center; border-radius: 16px; position: relative; transition: 0.2s; overflow: visible; display: flex; flex-direction: column; justify-content: space-between; min-height: 180px; }
+        .market-item.owned { border-color: var(--success); background: rgba(0, 255, 157, 0.05); }
+        .item-preview { height: 70px; display: flex; justify-content: center; align-items: center; margin-bottom: 5px; }
+        .item-name { font-size: 14px; color: #fff; display: block; margin-bottom: 2px; font-weight: bold; } .item-price { color: var(--primary); font-size: 16px; font-weight: bold; }
+        .buy-btn { background: #fff; color: #000; border: none; padding: 8px; width: 100%; border-radius: 4px; font-family: 'Bebas Neue'; margin-top: auto; cursor: pointer; }
+        .owned-badge { color: var(--success); font-size: 14px; margin-top: auto; display: block; font-weight: bold; }
+        .icon-top { width: 40px; height: 40px; border-radius: 4px; transform: scale(1.2); } .icon-top::after { content:''; position:absolute; top:-2px; left:12px; width:16px; height:8px; background:#111; border-radius:0 0 10px 10px; }
+        .icon-bot { display: flex; gap: 2px; height: 40px; transform: scale(1.1); } .icon-leg { width: 15px; height: 100%; border-radius: 3px; }
+        .icon-hat { width: 40px; height: 15px; border-radius: 4px 4px 0 0; transform: scale(1.2); } .icon-hat::after { content:''; position:absolute; bottom:0; left:-5px; width:20px; height:5px; background:rgba(0,0,0,0.3); border-radius:5px 0 0 5px; transform:skewY(-20deg); }
+        .icon-chain { width: 30px; height: 30px; border: 3px solid gold; border-radius: 50%; transform: scale(1.1); }
+
+        /* LOBI */
+        .list-item { 
+            background: linear-gradient(135deg, rgba(40,40,40,0.9), rgba(20,20,20,0.9)); 
+            border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 12px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5); gap: 15px;
+        }
+        .item-title { font-size: 20px; color: white; font-weight: bold; font-family: 'Bebas Neue'; letter-spacing: 1px; }
+        .item-sub { font-size: 14px; color: var(--primary); font-weight: bold; }
+        .vs-btn { background: linear-gradient(135deg, #c0392b, #8e44ad); color: white; border: 1px solid #e74c3c; padding: 10px 20px; border-radius: 8px; font-family: 'Bebas Neue'; font-size: 18px; cursor: pointer; box-shadow: 0 0 15px rgba(231, 76, 60, 0.4); display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+
+        /* SOHBET */
+        #chat-screen { background: #1a1a1a; display: flex; flex-direction: column; justify-content: flex-end; }
+        #chat-messages { width: 100%; flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
+        .chat-bubble { max-width: 80%; padding: 10px; border-radius: 10px; font-family: sans-serif; font-size: 14px; position: relative; word-wrap: break-word; }
+        .chat-bubble.me { align-self: flex-end; background: #27ae60; color: white; border-bottom-right-radius: 0; }
+        .chat-bubble.other { align-self: flex-start; background: #444; color: #ddd; border-bottom-left-radius: 0; }
+        .chat-name { font-size: 10px; color: rgba(255,255,255,0.7); margin-bottom: 2px; font-weight: bold; }
+        .chat-input-area { width: 100%; padding: 10px; background: #222; display: flex; border-top: 1px solid #444; }
+        .chat-inp { flex-grow: 1; padding: 10px; border-radius: 20px; border: none; background: #333; color: white; outline: none; margin-right: 10px; }
+        .chat-send-btn { width: 50px; height: 40px; background: #f1c40f; color: black; border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+
+        /* SETUP & POPUPS */
+        #setup-screen { z-index: 10000; background: #000; width:100%; height:100%; position:absolute; top:0; left:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+        .login-input { padding: 15px; font-size: 20px; width: 100%; margin-bottom: 15px; text-align: center; font-family: 'Bebas Neue'; background: rgba(0,0,0,0.5); border: 1px solid #444; color: white; border-radius: 10px; outline: none; }
+        
+        #challenge-popup { position: absolute; top: 30%; left: 5%; width: 90%; background: #222; border: 2px solid #e74c3c; padding: 30px; border-radius: 20px; z-index: 20000; text-align: center; box-shadow: 0 0 100px rgba(255, 0, 0, 0.5); display: none; }
+        .pulse-text { animation: pulse 1s infinite; color: var(--danger); font-size: 28px; font-family: 'Permanent Marker'; margin-bottom: 10px; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+        /* SAVAŞ ALANI */
+        .battle-arena { width: 100%; height: 60%; display: flex; justify-content: space-between; align-items: flex-end; padding: 20px; padding-bottom: 40px; margin-top: 20px; background: linear-gradient(to bottom, #2c3e50, #000000); position: relative; overflow: hidden; }
+        .fighter-slot { width: 45%; height: 100%; position: relative; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+        .f-name { font-size: 18px; margin-bottom: 5px; text-shadow: none; background: rgba(0,0,0,0.7); border: 1px solid #555; color: #fff; padding: 5px 10px; border-radius: 8px; font-family: 'Bebas Neue'; z-index: 20; letter-spacing: 1px; text-align: center; min-width: 80px; }
+        .hp-bar-wrap { width: 100px; height: 14px; background: #222; border: 2px solid #fff; border-radius: 8px; margin-bottom: 15px; z-index: 20; overflow: hidden; }
+        .hp-fill { width: 100%; height: 100%; background: #2ecc71; transition: 0.3s; }
+        #enemy-slot .char-wrapper { transform: scaleX(-1) scale(0.6); transform-origin: bottom center; position: absolute; bottom: 0; } 
+        #my-slot .char-wrapper { transform: scale(0.6); transform-origin: bottom center; position: absolute; bottom: 0; }
+        .fighter-ui { display: flex; flex-direction: column; align-items: center; position: absolute; bottom: 250px; width: 100%; z-index: 20; }
+        .damage-text { position: absolute; font-size: 50px; font-family: 'Permanent Marker'; color: #e74c3c; animation: floatUp 1s forwards; text-shadow: 2px 2px 0 #fff; z-index: 200; pointer-events: none; }
+        @keyframes floatUp { 0% { transform: translateY(0) scale(0.5); opacity:0; } 50% { transform: translateY(-50px) scale(1.2); opacity:1; } 100% { transform: translateY(-100px) scale(1); opacity:0; } }
+        .vs-text { font-family: 'Black Ops One', cursive; font-size: 80px; background: linear-gradient(to bottom, #ff0000, #990000); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 15px rgba(255,0,0,0.8)); animation: pulseVS 0.8s infinite alternate; position: absolute; left: 50%; bottom: 45%; transform: translateX(-50%); z-index: 10; }
+        @keyframes pulseVS { 0% { transform: translateX(-50%) scale(1); } 100% { transform: translateX(-50%) scale(1.2); } }
+
+        /* COMBO ALANI */
+        #combo-area { width: 100%; padding: 15px; text-align: center; background: rgba(0,0,0,0.8); border-top: 1px solid #444; }
+        #combo-display { display: flex; justify-content: center; gap: 15px; margin-bottom: 15px; min-height: 50px; }
+        .combo-arrow { font-size: 30px; color: #555; width: 40px; height: 40px; border: 2px solid #555; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+        .combo-arrow.correct { color: #2ecc71; border-color: #2ecc71; animation: pop 0.2s; }
+        @keyframes pop { 50% { transform: scale(1.2); } }
+        #timer-bar-wrap { width: 100%; height: 8px; background: #333; margin-bottom: 15px; border-radius: 4px; }
+        #timer-bar { width: 100%; height: 100%; background: #f1c40f; transition: width 0.05s linear; }
+        .input-pad { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; width: 100%; max-width: 300px; margin: 0 auto; }
+        .d-btn { background: #333; border: 1px solid #555; height: 60px; border-radius: 12px; font-size: 24px; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .d-btn:active { background: #555; }
+
+        /* QUIZ MODU CSS */
+        #quiz-game-screen { display:flex; flex-direction:column; justify-content: center; height:100%; padding:30px; text-align:center; background: radial-gradient(circle, #222, #000); }
+        .quiz-timer-bar { height:10px; width:100%; background:#333; border-radius:5px; margin-bottom:20px; overflow:hidden; }
+        .quiz-timer-fill { height:100%; width:100%; background:var(--primary); transition: width 1s linear; }
+        .quiz-question-box { background: rgba(255, 255, 255, 0.08); padding: 30px; border-radius: 15px; margin-bottom: 40px; font-size: 20px; font-weight: bold; font-family: 'Rubik'; min-height: 120px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--primary); box-shadow: 0 0 20px rgba(241, 196, 15, 0.2); }
+        .quiz-options { display:grid; grid-template-columns: 1fr 1fr; gap:20px; }
+        .quiz-btn { background:#222; border:1px solid #555; padding:25px; font-size:18px; color:white; border-radius:12px; cursor:pointer; font-family:'Rajdhani'; font-weight:bold; transition:0.2s; }
+        .quiz-btn:active { background:#444; transform:scale(0.95); }
+        .quiz-score-board { display:flex; justify-content:space-between; margin-bottom:20px; font-size:22px; font-family:'Bebas Neue'; }
+        .quiz-btn.correct { background: var(--success); color: black; border-color: var(--success); box-shadow: 0 0 15px var(--success); }
+        .quiz-btn.wrong { background: var(--danger); color: white; border-color: var(--danger); }
+
+        /* FLOWIFY (YENİLENMİŞ TASARIM 2.0) */
+        .flowify-header { text-align: center; margin-bottom: 15px; }
+        
+        /* REVİZE 1: TABS DÜZENLEMESİ */
+        .flowify-tabs { 
+            display: flex; 
+            justify-content: center; /* Ortala */
+            background: transparent; 
+            margin-top: 10px;
+            margin-bottom: 20px;
+            gap: 15px;
+            width: 100%;
+        }
+        .f-tab { 
+            background: #2a2a2a; border: 1px solid #333; 
+            padding: 12px 35px; color: #aaa; cursor: pointer; border-radius: 50px; 
+            font-weight: bold; font-family: 'Rubik'; font-size: 14px; transition: 0.3s;
+        }
+        .f-tab.active { background: var(--spotify); color: black; box-shadow: 0 4px 15px rgba(29, 185, 84, 0.4); border-color: var(--spotify); }
+        
+        .record-area { 
+            text-align: center; padding: 30px; 
+            background: linear-gradient(145deg, #1a1a1a, #0d0d0d); 
+            border-radius: 20px; border: 1px solid #333;
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
+            position: relative; overflow: hidden;
+            width: 100%;
+        }
+        .record-area::before { content:'REC'; position: absolute; top: 10px; right: 15px; color: #555; font-weight: bold; font-size: 12px; }
+        
+        .rec-btn { 
+            width: 90px; height: 90px; border-radius: 50%; 
+            border: 6px solid #333; background: #e74c3c; 
+            cursor: pointer; margin: 20px auto; transition: 0.3s; 
+            display: flex; align-items: center; justify-content: center; 
+            margin: 0 auto; box-shadow: 0 0 25px rgba(231, 76, 60, 0.3); 
+        }
+        .rec-btn:active { transform: scale(0.95); }
+        .rec-btn.recording { animation: pulseRec 1.5s infinite; background: #ff0000; box-shadow: 0 0 40px #ff0000; }
+        @keyframes pulseRec { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        
+        /* ŞARKI LİSTESİ (YENİ YILDIZLI) */
+        .song-list-item { 
+            display: flex; align-items: center; gap: 15px; 
+            padding: 12px; background: rgba(255,255,255,0.03); 
+            margin-bottom: 8px; border-radius: 12px; transition: 0.2s; cursor: pointer; 
+            border-left: 4px solid transparent;
+        }
+        .song-list-item:hover { background: rgba(255,255,255,0.08); border-left-color: var(--spotify); transform: translateX(5px); }
+        .song-list-item.active-song { background: rgba(29, 185, 84, 0.15); border-left-color: var(--spotify); }
+        
+        .song-icon { 
+            width: 45px; height: 45px; background: #222; 
+            display: flex; align-items: center; justify-content: center; 
+            border-radius: 8px; color: var(--spotify); font-size: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        .song-info { flex-grow: 1; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; }
+        .song-title { font-weight: 600; color: white; font-size: 15px; font-family: 'Rajdhani'; }
+        .song-artist { font-size: 12px; color: #888; margin-top: 3px; }
+        
+        .song-stats { display: flex; align-items: center; gap: 10px; }
+        .song-plays { font-size: 11px; color: #aaa; }
+        /* REVİZE 2: YILDIZ STİLİ */
+        .star-badge { 
+            color: #f1c40f; font-size: 12px; font-weight: bold; 
+            display: flex; align-items: center; gap: 3px; 
+            background: rgba(241, 196, 15, 0.1); padding: 2px 6px; border-radius: 8px;
+            cursor: pointer; transition: 0.2s;
+        }
+        .star-badge:active { transform: scale(1.2); }
+
+        .leaderboard-list { width: 95%; flex-grow: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+        .lb-item { background: rgba(255, 255, 255, 0.05); margin-bottom: 5px; border-left: 4px solid #444; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-radius: 5px; font-size: 18px; }
+        .lb-item:nth-child(1) { border-left-color: gold; background: linear-gradient(90deg, rgba(255,215,0,0.1), transparent); }
+        .lb-item:nth-child(2) { border-left-color: silver; }
+        .lb-item:nth-child(3) { border-left-color: #cd7f32; }
+        .lb-item.me { border: 1px solid var(--primary); box-shadow: 0 0 10px rgba(241, 196, 15, 0.3); }
+        
+        .modal-footer {
+            margin-top: auto; width: 100%; display: flex; justify-content: center; 
+            padding-bottom: 20px; background: linear-gradient(transparent, #000 80%);
+            pointer-events: none;
+        }
+        .modal-footer button { pointer-events: auto; }
+
+    </style>
+</head>
+<body>
+
+    <div id="app-bg"></div>
+
+    <div id="auth-screen">
+        <h1 class="logo-main">FLOW MASTER</h1>
+        <p class="slogan">Sokakların Ritmi</p>
+        <div class="auth-box">
+            <p style="color:#aaa; margin-bottom:25px; font-size:14px;" id="loading-msg">YÜKLENİYOR...</p>
+            <div id="login-buttons" style="display:none;">
+                <button class="btn-start-rap" onclick="loginGuest()">
+                    <i class="fas fa-play"></i> RAP YAPMAYA BAŞLA
+                </button>
+            </div>
+        </div>
+        <div class="creator-sign">GAME by Mete Urgup</div>
+    </div>
+
+    <div id="welcome-screen">
+        <div class="welcome-box">
+            <h1 style="font-family:'Permanent Marker'; color:var(--primary); margin-bottom:10px;">HOS GELDINIZ</h1>
+            <h3 id="welcome-name" class="welcome-text" style="margin-bottom:20px;">MC</h3>
+            <p class="welcome-text" style="color:#aaa; font-size:14px;">Sokakların kralı olmaya hazır mısın?</p>
+            <ul class="welcome-list">
+                <li><i class="fas fa-fist-raised"></i><b>SAVAŞ:</b> Flow yakala, rakibi yen.</li>
+                <li><i class="fas fa-question-circle"></i><b>BİLGİ:</b> Rap kültürünü konuştur.</li>
+                <li><i class="fab fa-spotify"></i><b>MÜZİK:</b> Kendi parçanı kaydet ve yayınla!</li>
+            </ul>
+            <button class="btn btn-green" onclick="closeWelcome()">ANLAŞILDI (BAŞLA)</button>
+        </div>
+    </div>
+
+    <div id="setup-screen" class="hidden">
+        <div class="auth-box" style="width: 85%; max-width: 350px; background: rgba(20, 20, 20, 0.95); padding: 30px; border-radius: 20px;">
+            <h2 style="font-family:'Permanent Marker'; color:var(--primary); text-align:center;">MC ADIN NE?</h2>
+            <input type="text" id="setup-name" class="login-input" placeholder="Örn: FlowKing" maxlength="12">
+            <button class="btn btn-green" onclick="completeSetup()">BAŞLA</button>
+        </div>
+    </div>
+
+    <div id="challenge-popup" class="hidden">
+        <div class="pulse-text" id="challenge-text">MEYDAN OKUMA!</div>
+        <p style="color:#ccc; margin-bottom:20px;">Biri seninle kapışmak istiyor.</p>
+        <button class="btn btn-green" onclick="acceptChallenge()">KABUL ET</button>
+        <button class="btn btn-red" onclick="declineChallenge()">REDDET</button>
+    </div>
+
+    <div id="app-container" class="hidden">
+        <div class="ingame-bg-logo">FLOW MASTER</div>
+
+        <div class="top-bar" id="ui-top">
+            <div class="stat-box" id="mute-btn" onclick="toggleMusic()"><i id="mute-icon" class="fas fa-volume-mute" style="font-size:20px; color:#e74c3c;"></i></div>
+            <div class="stat-box"><div class="stat-val" id="d-lvl">1</div><div class="stat-lbl">SEVİYE</div></div>
+            <div class="stat-box"><div class="stat-val gold" id="d-hype">0</div><div class="stat-lbl">HYPE</div></div>
+            <div class="stat-box"><div class="stat-val green" id="d-money">0₺</div><div class="stat-lbl">NAKİT</div></div>
+            <div class="online-badge"><div class="online-dot"></div>LIVE: <span id="online-count">1</span></div>
+        </div>
+
+        <div class="char-area" id="main-stage">
+            <div class="char-wrapper anim-idle" id="player-char">
+                <div class="part c-hat"></div><img src="kafa1.png" class="part c-head" alt="kafa"><div class="part c-chain"></div>
+                <div class="part c-body voxel">
+                    <div class="c-tank"></div>
+                    <div id="h-details"><div class="c-string str-l"></div><div class="c-string str-r"></div><div class="c-pocket"></div></div>
+                    <div class="c-arm arm-l"><div class="c-hand"></div></div>
+                    <div class="c-arm arm-r"><div class="c-hand"></div><div class="c-mic"></div></div>
+                </div>
+                <div class="part c-legs voxel"><div class="c-leg"><div class="c-shoe"></div></div><div class="c-leg"><div class="c-shoe"></div></div></div>
+            </div>
+        </div>
+
+        <div id="creator-controls">
+            <div style="grid-column: span 2; color:#888; font-size:12px; text-align:center; margin-bottom:5px;">GİYSİ DOLABI</div>
+            <button class="c-btn" onclick="cycleHead()"><i class="fas fa-user-circle"></i> KAFA</button>
+            <button class="c-btn" onclick="cycleColor('top')"><i class="fas fa-tshirt"></i> ÜST</button>
+            <button class="c-btn" onclick="cycleColor('bot')"><i class="fas fa-user"></i> ALT</button>
+            <button class="c-btn" onclick="toggleHat()"><i class="fas fa-hat-cowboy-side"></i> KEP</button>
+            <button class="c-btn" onclick="toggleChain()"><i class="fas fa-link"></i> ZİNCİR</button>
+            <button class="c-btn" onclick="toggleModel()"><i class="fas fa-vest"></i> MODEL</button>
+            <button class="btn btn-green full-col" onclick="saveCharacter()">KAYDET</button>
+            <button class="c-btn" onclick="openNameChange()">✏️ İSİM</button>
+            <button class="c-btn" onclick="logout()" style="border-color:var(--danger); color:var(--danger);">ÇIKIŞ</button>
+        </div>
+    </div>
+
+    <div class="bottom-nav hidden" id="ui-bottom">
+        <div class="nav-item active" onclick="openScreen('home')"><i class="fas fa-home"></i>EV</div>
+        <div class="nav-item" onclick="openMusicApp()"><i class="fab fa-spotify" style="color:var(--spotify);"></i>MÜZİK</div>
+        <div class="nav-item" onclick="openQuizLobby()"><i class="fas fa-question-circle" style="color:#9b59b6;"></i>RAP IQ</div>
+        <div class="nav-item" onclick="enterLobby()"><i class="fas fa-fist-raised" style="color:#e74c3c;"></i>SAVAŞ</div>
+        <div class="nav-item" style="color:#f1c40f;" onclick="openMarket()"><i class="fas fa-shopping-cart"></i>MARKET</div>
+    </div>
+
+    <div id="music-screen" class="modal hidden">
+        <div class="modal-header" style="border-bottom:none; padding-bottom:10px;">FLOWIFY</div>
+        
+        <div class="flowify-tabs">
+            <button class="f-tab active" onclick="switchMusicTab('stream')">Keşfet</button>
+            <button class="f-tab" onclick="switchMusicTab('record')">Stüdyo</button>
+        </div>
+
+        <div id="tab-record" class="hidden" style="width:100%; padding:20px; display:flex; flex-direction:column; align-items:center; overflow-y:auto; flex-grow:1;">
+            
+            <div style="width:100%; margin-bottom:15px; background:#181818; padding:20px; border-radius:10px; text-align:center;">
+                <div style="color:#b3b3b3; font-size:12px; margin-bottom:15px; letter-spacing:1px; font-weight:bold;">BEAT KONTROL</div>
+                <button class="btn" style="background:#1DB954; color:black; font-weight:bold; font-size:14px; padding:12px; border-radius:50px; display:inline-block; width:45%; font-family:'Rubik';" onclick="playBeat()"><i class="fas fa-play"></i> OYNAT</button>
+                <button class="btn" style="background:#b3b3b3; color:black; font-weight:bold; font-size:14px; padding:12px; border-radius:50px; display:inline-block; width:45%; font-family:'Rubik';" onclick="stopBeat()"><i class="fas fa-stop"></i> DUR</button>
+            </div>
+            
+            <div class="record-area" style="width:100%; margin-top:20px;">
+                <div class="rec-btn" id="mic-btn" onclick="toggleRecording()"><i class="fas fa-microphone" style="font-size:30px; color:white;"></i></div>
+                <div id="rec-status" style="color:#aaa; margin-bottom:10px; font-weight:bold; letter-spacing:1px;">KAYDA BAŞLAMAK İÇİN BAS</div>
+                <audio id="audio-preview" controls style="width:100%; margin-top:15px; display:none;"></audio>
+            </div>
+            
+            <div id="publish-area" class="hidden" style="width:100%; margin-top:20px;">
+                <input type="text" id="song-name-input" class="login-input" placeholder="Parça Adı..." style="font-size:16px; padding:15px; background:#222;">
+                <button class="btn" style="background:#1DB954; color:black; border-radius:50px; font-weight:bold; margin-top:10px;" onclick="publishSong()">YAYINLA (+500 XP)</button>
+            </div>
+            <p style="font-size:11px; color:#555; margin-top:15px; text-align:center; line-height:1.4;">
+                <i class="fas fa-info-circle"></i> 10 Saniye Freestyle yap!
+            </p>
+        </div>
+
+        <div id="tab-stream" style="width:100%; flex-grow:1; overflow-y:auto; padding:10px; padding-bottom: 80px;">
+            <div id="song-list-container">Yükleniyor...</div>
+        </div>
+
+        <div class="modal-footer">
+             <button class="btn" style="width:90%;background:#333; border-radius:50px;" onclick="closeMusicApp()">KAPAT</button>
+        </div>
+    </div>
+
+    <div id="lobby-screen" class="modal hidden">
+        <div class="modal-header">ONLINE ARENA</div>
+        <div class="scroll-list" id="lobby-list"></div>
+        <div class="modal-footer" style="flex-direction:column; align-items:center;">
+             <button class="btn" style="width:90%;margin-top:10px;background:#333;" onclick="startTraining()">ANTRENMAN (SOLO)</button>
+             <button class="btn" style="width:90%;margin-top:10px;background:#333;" onclick="exitLobby()">GERİ DÖN</button>
+        </div>
+    </div>
+    
+    <div id="quiz-lobby-screen" class="modal hidden">
+        <div class="modal-header" style="color:#9b59b6;">RAP IQ TESTİ</div>
+        <div class="scroll-list" id="quiz-lobby-list"></div>
+        <div class="modal-footer">
+            <button class="btn" style="width:90%;background:#333;" onclick="exitQuizLobby()">GERİ DÖN</button>
+        </div>
+    </div>
+
+    <div id="quiz-game-modal" class="modal hidden">
+        <div id="quiz-game-screen">
+            <div class="quiz-score-board">
+                <div style="color:#3498db">BEN: <span id="q-score-me">0</span></div>
+                <div style="color:#e74c3c">RAKİP: <span id="q-score-en">0</span></div>
+            </div>
+            <div class="quiz-timer-bar"><div class="quiz-timer-fill" id="q-timer"></div></div>
+            <div class="quiz-question-box" id="q-text">Soru Yükleniyor...</div>
+            <div class="quiz-options">
+                <button class="quiz-btn" id="q-btn-0" onclick="submitAnswer(0)">A</button>
+                <button class="quiz-btn" id="q-btn-1" onclick="submitAnswer(1)">B</button>
+                <button class="quiz-btn" id="q-btn-2" onclick="submitAnswer(2)">C</button>
+                <button class="quiz-btn" id="q-btn-3" onclick="submitAnswer(3)">D</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="market-screen" class="modal hidden">
+        <div class="modal-header">MAĞAZA</div>
+        <div style="color:var(--success);text-align:center;padding:10px;">BAKİYE: <span id="market-money" style="font-size:24px; font-family:'Bebas Neue';">0₺</span></div>
+        <div class="market-grid" id="market-list"></div>
+        <div class="modal-footer">
+            <button class="btn" style="width:90%;background:#333;" onclick="closeMarket()">KAPAT</button>
+        </div>
+    </div>
+
+    <div id="chat-screen" class="modal hidden">
+        <div class="modal-header">SOHBET</div>
+        <div id="chat-messages" class="scroll-list"></div>
+        <div class="chat-input-area">
+            <input id="chat-input" class="chat-inp">
+            <button class="chat-send-btn" onclick="sendChat()">></button>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" style="width:90%;margin:0;background:#333;" onclick="closeChat()">KAPAT</button>
+        </div>
+    </div>
+    
+    <div id="leaderboard-screen" class="modal hidden">
+        <div class="modal-header">LİDERLİK TABLOSU</div>
+        <div class="leaderboard-list" id="lb-list"></div>
+        <div class="modal-footer">
+            <button class="btn" style="width:90%;background:#333;" onclick="closeLeaderboard()">KAPAT</button>
+        </div>
+    </div>
+
+    <div id="modal-battle" class="modal hidden">
+        <div id="fight-ui" style="width:100%; height:100%; display:flex; flex-direction:column; position:relative;">
+            <button class="btn-auth" style="position:absolute; top:10px; right:10px; width:auto; padding:5px 10px; font-size:14px; background:#c0392b; z-index:500;" onclick="forceExitBattle()">ÇIKIŞ</button>
+            <div class="battle-arena">
+                <div class="fighter-slot" id="my-slot">
+                    <div class="fighter-ui">
+                        <div class="f-name" style="color:#3498db; border-color:#3498db">BEN</div>
+                        <div class="hp-bar-wrap"><div class="hp-fill" id="hp-me"></div></div>
+                    </div>
+                </div>
+                <div class="vs-text">VS</div>
+                <div class="fighter-slot" id="enemy-slot">
+                    <div class="fighter-ui">
+                        <div class="f-name" style="color:var(--danger); border-color:var(--danger)" id="name-en">RAKİP</div>
+                        <div class="hp-bar-wrap"><div class="hp-fill" id="hp-en"></div></div>
+                    </div>
+                </div>
+            </div>
+            <div style="text-align:center; padding:10px; background:rgba(0,0,0,0.9); flex-grow:1; display:flex; flex-direction:column; justify-content:center;">
+                <div id="battle-log" style="color:#aaa; font-size:18px; margin-bottom:10px; font-family:sans-serif; min-height:25px;">SAVAŞ BAŞLIYOR!</div>
+                <div id="combo-area" class="hidden">
+                    <div id="timer-bar-wrap"><div id="timer-bar"></div></div>
+                    <div id="combo-display"></div>
+                    <div class="input-pad" style="margin-top:10px;">
+                        <div></div>
+                        <div class="d-btn" onclick="handleInput('up')"><i class="fas fa-arrow-up"></i></div>
+                        <div></div>
+                        <div class="d-btn" onclick="handleInput('left')"><i class="fas fa-arrow-left"></i></div>
+                        <div class="d-btn" onclick="handleInput('down')"><i class="fas fa-arrow-down"></i></div>
+                        <div class="d-btn" onclick="handleInput('right')"><i class="fas fa-arrow-right"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // POLYFILL
+        if (navigator.mediaDevices === undefined) { navigator.mediaDevices = {}; }
+        if (navigator.mediaDevices.getUserMedia === undefined) {
+            navigator.mediaDevices.getUserMedia = function(constraints) {
+                var getUserMedia = navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+                if (!getUserMedia) return Promise.reject(new Error('Tarayıcınız ses kaydını desteklemiyor.'));
+                return new Promise(function(resolve, reject) { getUserMedia.call(navigator, constraints, resolve, reject); });
+            }
+        }
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBLueVgUVS1mcclrU4ujnjqtC1eHsfoApQ", 
+            authDomain: "rhymelife00.firebaseapp.com",
+            databaseURL: "https://rhymelife00-default-rtdb.europe-west1.firebasedatabase.app/",
+            projectId: "rhymelife00",
+            storageBucket: "rhymelife00.firebasestorage.app",
+            messagingSenderId: "36128275638",
+            appId: "1:36128275638:web:faef5af5a0e4b3b44cfa17"
+        };
+
+        let db, auth;
+        let isFirebaseReady = false;
+
+        const audioSys = {
+            beat: new Audio('beat.mp3'),
+            click: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'),
+            punch: new Audio('https://assets.mixkit.co/active_storage/sfx/2151/2151-preview.mp3'),
+            arrow: new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3'),
+            fail: new Audio('https://assets.mixkit.co/active_storage/sfx/2003/2003-preview.mp3'), 
+            crit: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3')
+        };
+        audioSys.beat.loop = true; audioSys.beat.volume = 0.5;
+        let isMuted = true;
+
+        function toggleMusic() {
+            const btn = document.getElementById('mute-icon');
+            if (isMuted) {
+                isMuted = false; btn.className = 'fas fa-volume-up'; btn.style.color = '#2ecc71';
+            } else {
+                isMuted = true; btn.className = 'fas fa-volume-mute'; btn.style.color = '#e74c3c';
+                stopBeat(); 
+            }
+        }
+        function playSfx(type) {
+            if(isMuted && type !== 'click') return; 
+            if(audioSys[type]) { const s = audioSys[type].cloneNode(); s.volume = 0.6; s.play().catch(()=>{}); }
+        }
+        
+        function playBeat() { audioSys.beat.currentTime=0; audioSys.beat.play().catch(e => alert("Beat dosyası bulunamadı! Lütfen 'beat.mp3' dosyasını ekleyin.")); }
+        function stopBeat() { audioSys.beat.pause(); audioSys.beat.currentTime=0; }
+
+        document.addEventListener('click', (e) => {
+            if(e.target.tagName === 'BUTTON' || e.target.closest('button') || e.target.classList.contains('nav-item') || e.target.classList.contains('d-btn')) {
+                playSfx('click');
+            }
+        });
+
+        const colors = [ '#333', '#c0392b', '#2980b9', '#f39c12', '#8e44ad', '#fff', 'repeating-linear-gradient(45deg, #000, #000 10px, #fff 10px, #fff 20px)', 'radial-gradient(circle, #555 20%, #333 20%, #333 80%, #111 80%)', 'linear-gradient(135deg, #FFD700 0%, #FDB931 50%, #FFD700 100%)' ];
+        const heads = ['kafa1.png', 'kafa2.jpg', 'kafa3.jpg', 'kafa4.png', 'kafa5.png', 'kafa6.png'];
+        const SHOP_ITEMS = [ { id: 'top_1', type: 'top', name: 'Kırmızı Hoodie', price: 150, val: 1 }, { id: 'top_2', type: 'top', name: 'Mavi Hoodie', price: 250, val: 2 }, { id: 'top_3', type: 'top', name: 'Sarı Hoodie', price: 500, val: 3 }, { id: 'top_4', type: 'top', name: 'Mor Hoodie', price: 1000, val: 4 }, { id: 'top_5', type: 'top', name: 'Beyaz Hoodie', price: 2000, val: 5 }, { id: 'top_6', type: 'top', name: 'Zebra Desen', price: 3000, val: 6 }, { id: 'top_7', type: 'top', name: 'Kamuflaj', price: 4500, val: 7 }, { id: 'top_8', type: 'top', name: 'Altın Kaplama', price: 8000, val: 8 }, { id: 'bot_1', type: 'bot', name: 'Kırmızı Pant.', price: 150, val: 1 }, { id: 'bot_2', type: 'bot', name: 'Mavi Pant.', price: 250, val: 2 }, { id: 'hat_1', type: 'acc', name: 'Kırmızı Kep', price: 300, sub: 'hat' }, { id: 'chn_1', type: 'acc', name: 'Altın Zincir', price: 1000, sub: 'chain' } ];
+
+        const TR_RAP_QUESTIONS = [ { q: "Sagopa Kajmer'in 2004 yapımı efsane albümü hangisidir?", a: ["Bir Pesimistin Gözyaşları", "Romantizma", "Kits", "Kalp Hastası"], c: 0 }, { q: "Rap müzikte ritim ve kafiye uyumuna ne denir?", a: ["Flex", "Flow", "Punchline", "Acapella"], c: 1 }, { q: "Ezhel'in ilk stüdyo albümü hangisidir?", a: ["Müptezhel", "Lights Out", "Made in Turkey", "Aya"], c: 0 }, { q: "Ceza'nın 'Holocaust' şarkısı hangi filmde kullanıldı?", a: ["G.O.R.A", "Pardon", "Crossing the Bridge", "Duvara Karşı"], c: 2 }, { q: "Mode XL grubu hangi şehirden çıkmıştır?", a: ["İstanbul", "İzmir", "Ankara", "Eskişehir"], c: 2 } ];
+
+        let player = { name: "Player", hype: 0, money: 500, level: 1, inventory: {} };
+        let myLook = { head:0, topColor:0, botColor:0, hat:false, chain:false, tank:false };
+        let myId = null;
+        let activeBattleId = null;
+        let comboSequence = []; let currentStep = 0; let comboTimer = null; let timeLeft = 0;
+        
+        let activeQuizId = null;
+        let currentQIndex = -1; 
+        let quizTimer = null;
+        let quizTimeLeft = 100;
+
+        function initApp() {
+            setTimeout(() => {
+                const loader = document.getElementById('loading-msg');
+                if(loader) { loader.style.display = 'none'; document.getElementById('login-buttons').style.display = 'flex'; }
+            }, 2500);
+            try {
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.database(); auth = firebase.auth(); isFirebaseReady = true;
+                auth.onAuthStateChanged(user => {
+                    if (user) { handleUserLogin(user); } else { document.getElementById('loading-msg').style.display = 'none'; document.getElementById('login-buttons').style.display = 'flex'; }
+                });
+            } catch(e) { alert("Hata: " + e.message); }
+        }
+        window.onload = initApp;
+
+        function handleUserLogin(user) {
+            myId = user.uid;
+            db.ref(".info/connected").on("value", snap => {
+                if (snap.val() === true) {
+                    db.ref("players/" + myId).onDisconnect().update({online: false});
+                    db.ref("players/" + myId).update({online: true});
+                }
+            });
+            db.ref("players").on("value", snap => {
+                let count = 0;
+                snap.forEach(c => { if(c.val().online) count++; });
+                document.getElementById("online-count").innerText = count;
+            });
+
+            db.ref('players/' + myId).on('value', snap => {
+                if (snap.exists() && snap.val().name) {
+                    player = snap.val();
+                    if(!player.inventory) player.inventory = {};
+                    if(player.look) myLook = player.look;
+                    player.hype = Number(player.hype || 0); player.money = Number(player.money || 0);
+                    
+                    if(player.request) {
+                        let type = player.request.type || 'battle'; 
+                        document.getElementById('challenge-text').innerText = player.request.name + (type==='quiz' ? " BİLGİ YARIŞMASI İSTİYOR!" : " KAPIŞMAK İSTİYOR!");
+                        document.getElementById('challenge-popup').classList.remove('hidden');
+                        document.getElementById('challenge-popup').style.display = "block";
+                    } else {
+                        document.getElementById('challenge-popup').classList.add('hidden');
+                        document.getElementById('challenge-popup').style.display = "none";
+                    }
+
+                    if(player.battle && !activeBattleId) {
+                        if(player.battle.startsWith("quiz_")) { activeQuizId = player.battle; startQuizGame(activeQuizId); } 
+                        else { activeBattleId = player.battle; startBattle(activeBattleId); }
+                    }
+
+                    if (document.getElementById('app-container').classList.contains('hidden') && !activeBattleId && !activeQuizId) {
+                        showGame();
+                        if(!sessionStorage.getItem('welcomed')) { showWelcome(player.name); sessionStorage.setItem('welcomed', 'true'); }
+                    }
+                    else { updateUI(); renderChar('player-char', myLook); }
+                } else if (snap.exists() && !snap.val().name) showSetup();
+                else if (!document.getElementById('setup-screen').classList.contains('hidden')) return;
+                else showSetup();
+            });
+        }
+
+        // --- FLOWIFY ---
+        let mediaRecorder; let audioChunks = []; let currentAudioBase64 = null;
+        let globalAudio = new Audio();
+        let currentPlayingKey = null;
+        let loadedSongs = {}; 
+        
+        function openMusicApp() { document.getElementById('music-screen').classList.remove('hidden'); switchMusicTab('stream'); }
+        function closeMusicApp() { 
+            stopBeat(); 
+            globalAudio.pause();
+            document.getElementById('music-screen').classList.add('hidden'); 
+        }
+        
+        function switchMusicTab(tab) {
+            document.querySelectorAll('.f-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.f-tab').forEach(t => { if(t.innerText === (tab==='stream'?'Keşfet':'Stüdyo')) t.classList.add('active'); });
+            
+            if(tab === 'record') {
+                document.getElementById('tab-record').classList.remove('hidden');
+                document.getElementById('tab-stream').classList.add('hidden');
+                globalAudio.pause(); 
+            } else {
+                stopBeat(); 
+                document.getElementById('tab-record').classList.add('hidden');
+                document.getElementById('tab-stream').classList.remove('hidden');
+                loadSongs();
+            }
+        }
+
+        async function toggleRecording() {
+            const btn = document.getElementById('mic-btn');
+            const status = document.getElementById('rec-status');
+            const preview = document.getElementById('audio-preview');
+            const pubArea = document.getElementById('publish-area');
+            
+            if (!mediaRecorder || mediaRecorder.state === "inactive") {
+                try {
+                    status.innerText = "İzin bekleniyor...";
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    mediaRecorder.start();
+                    btn.classList.add('recording');
+                    status.innerText = "KAYDEDİLİYOR... (10 Saniye)";
+                    if(preview) preview.style.display = 'none';
+                    
+                    setTimeout(() => {
+                        if(mediaRecorder.state === 'recording') mediaRecorder.stop();
+                    }, 10000);
+
+                    mediaRecorder.ondataavailable = e => { audioChunks.push(e.data); };
+                    mediaRecorder.onstop = () => {
+                        btn.classList.remove('recording');
+                        status.innerText = "Kayıt Bitti. İsim Ver ve Yayınla!";
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+                        const reader = new FileReader();
+                        reader.readAsDataURL(audioBlob);
+                        reader.onloadend = function() {
+                            currentAudioBase64 = reader.result;
+                            if(preview) {
+                                preview.src = currentAudioBase64;
+                                preview.style.display = 'block';
+                            }
+                            if(pubArea) pubArea.classList.remove('hidden');
+                        }
+                        stream.getTracks().forEach(track => track.stop());
+                    };
+                } catch(e) { alert("Mikrofon hatası: " + e.message); status.innerText = "HATA!"; }
+            }
+        }
+
+        function publishSong() {
+            let title = document.getElementById('song-name-input').value.trim();
+            if(!title) return alert("Parçana bir isim ver!");
+            if(!currentAudioBase64) return alert("Önce ses kaydı almalısın!");
+
+            db.ref('songs').push({
+                title: title,
+                artist: player.name,
+                audio: currentAudioBase64,
+                plays: 0,
+                stars: 0, // Initial stars
+                timestamp: Date.now()
+            }).then(() => {
+                alert("Yayınlandı! +500 XP");
+                player.hype += 500;
+                db.ref('players/'+myId).update({hype: player.hype});
+                currentAudioBase64 = null;
+                document.getElementById('song-name-input').value = "";
+                document.getElementById('publish-area').classList.add('hidden');
+                stopBeat();
+                switchMusicTab('stream');
+            });
+        }
+
+        function loadSongs() {
+            db.ref('songs').limitToLast(20).on('value', snap => {
+                const listDiv = document.getElementById('song-list-container');
+                if(!snap.exists()) {
+                    listDiv.innerHTML = "<div style='text-align:center; color:#555; margin-top:20px'>Henüz parça yok.</div>";
+                    return;
+                }
+                
+                loadedSongs = {};
+                let songsArr = [];
+                snap.forEach(c => {
+                    let s = c.val();
+                    s.key = c.key;
+                    loadedSongs[c.key] = s;
+                    songsArr.push(s);
+                });
+                
+                let html = "";
+                songsArr.reverse().forEach(s => {
+                    let isPlaying = (currentPlayingKey === s.key && !globalAudio.paused);
+                    let iconClass = isPlaying ? "fa-pause" : "fa-play";
+                    let activeClass = isPlaying ? "active-song" : "";
+
+                    html += `<div class="song-list-item ${activeClass}" id="song-item-${s.key}">
+                        <div class="song-icon" onclick="playTrack('${s.key}')"><i id="icon-${s.key}" class="fas ${iconClass}"></i></div>
+                        <div class="song-info" onclick="playTrack('${s.key}')">
+                            <div class="song-title">${s.title}</div>
+                            <div class="song-artist">${s.artist}</div>
+                        </div>
+                        <div class="song-stats">
+                             <div class="song-plays">${s.plays || 0} Play</div>
+                             <div class="star-badge" onclick="rateSong(event, '${s.key}')"><i class="fas fa-star"></i> ${s.stars || 0}</div>
+                        </div>
+                    </div>`;
+                });
+                listDiv.innerHTML = html;
+            });
+        }
+
+        function playTrack(key) {
+            let song = loadedSongs[key];
+            if (!song) return;
+            if (currentPlayingKey === key) {
+                if (globalAudio.paused) { globalAudio.play(); updateSongIcon(key, 'pause'); } 
+                else { globalAudio.pause(); updateSongIcon(key, 'play'); }
+                return;
+            }
+            if (currentPlayingKey) { updateSongIcon(currentPlayingKey, 'play'); }
+            currentPlayingKey = key;
+            globalAudio.src = song.audio;
+            globalAudio.play().then(() => {
+                updateSongIcon(key, 'pause');
+                db.ref('songs/'+key).transaction(s => { if(s) s.plays++; return s; });
+            }).catch(e => alert("Oynatma hatası: " + e));
+            globalAudio.onended = () => { updateSongIcon(key, 'play'); currentPlayingKey = null; };
+        }
+
+        function updateSongIcon(key, state) {
+            document.querySelectorAll('.song-list-item').forEach(el => el.classList.remove('active-song'));
+            document.querySelectorAll('.song-icon i').forEach(el => el.className = 'fas fa-play');
+            let icon = document.getElementById('icon-' + key);
+            let item = document.getElementById('song-item-' + key);
+            if (icon && item) {
+                icon.className = state === 'pause' ? 'fas fa-pause' : 'fas fa-play';
+                if (state === 'pause') item.classList.add('active-song');
+            }
+        }
+        
+        function rateSong(e, key) {
+            e.stopPropagation(); // Parent click (play) engelle
+            db.ref('songs/'+key).transaction(s => {
+                if(s) { s.stars = (s.stars || 0) + 1; }
+                return s;
+            });
+            playSfx('crit'); // Yıldız sesi
+        }
+
+        // --- QUIZ & BATTLE ---
+        function openQuizLobby() { document.getElementById('quiz-lobby-screen').classList.remove('hidden'); renderQuizLobby(); }
+        function exitQuizLobby() { document.getElementById('quiz-lobby-screen').classList.add('hidden'); }
+        function renderQuizLobby() {
+            db.ref('players').limitToLast(20).once('value', snap => {
+                let html = "";
+                snap.forEach(s => { if(s.key !== myId && s.val().name && s.val().online) html += `<div class="list-item"><div><div class="item-title">${s.val().name}</div><div class="item-sub">RAP IQ: ${s.val().level * 10}</div></div><button class="vs-btn" style="background:linear-gradient(135deg, #9b59b6, #8e44ad);" onclick="sendQuizChallenge('${s.key}', '${s.val().name}')">YARIŞ</button></div>`; });
+                document.getElementById('quiz-lobby-list').innerHTML = html || "<div style='text-align:center; margin-top:20px; color:#666;'>Kimse Online Değil.</div>";
+            });
+        }
+        function sendQuizChallenge(tid, tname) { db.ref('players/' + tid).update({ request: { from: myId, name: player.name, type: 'quiz' } }); alert("İstek gönderildi!"); }
+        function startQuizGame(qid) {
+            document.getElementById('quiz-lobby-screen').classList.add('hidden');
+            document.getElementById('quiz-game-modal').classList.remove('hidden');
+            currentQIndex = -1; 
+            db.ref("quiz_battles/" + qid).on('value', snap => {
+                if(!snap.exists()) { activeQuizId=null; document.getElementById('quiz-game-modal').classList.add('hidden'); showGame(); return; }
+                const data = snap.val();
+                let isP1 = data.p1 === myId;
+                document.getElementById('q-score-me').innerText = isP1 ? data.s1 : data.s2;
+                document.getElementById('q-score-en').innerText = isP1 ? data.s2 : data.s1;
+                if(data.round > 4) {
+                    setTimeout(() => {
+                        let myS = isP1 ? data.s1 : data.s2; let enS = isP1 ? data.s2 : data.s1;
+                        if(myS > enS) { alert("KAZANDIN! +200 Para +100 Hype"); db.ref("players/"+myId).update({money:player.money+200, hype:player.hype+100}); }
+                        else if(myS < enS) alert("KAYBETTİN..."); else alert("BERABERE!");
+                        db.ref("players/"+myId).update({battle:null}); if(isP1) db.ref("quiz_battles/"+qid).remove();
+                    }, 1000); return;
+                }
+                if(data.round !== currentQIndex) { currentQIndex = data.round; loadQuestion(data.qIds[currentQIndex]); }
+            });
+        }
+        function loadQuestion(qIdx) {
+            let q = TR_RAP_QUESTIONS[qIdx];
+            document.getElementById('q-text').innerText = q.q;
+            for(let i=0; i<4; i++) { let btn = document.getElementById('q-btn-'+i); btn.innerText = q.a[i]; btn.className = 'quiz-btn'; btn.disabled = false; btn.classList.remove('correct', 'wrong'); }
+            quizTimeLeft = 100; if(quizTimer) clearInterval(quizTimer);
+            quizTimer = setInterval(() => { quizTimeLeft -= 1; document.getElementById('q-timer').style.width = quizTimeLeft + "%"; if(quizTimeLeft <= 0) { clearInterval(quizTimer); submitAnswer(-1); } }, 100);
+        }
+        function submitAnswer(ansIdx) {
+            clearInterval(quizTimer); for(let i=0; i<4; i++) document.getElementById('q-btn-'+i).disabled = true;
+            db.ref("quiz_battles/" + activeQuizId).once('value', s => {
+                let d = s.val(); let realQ = TR_RAP_QUESTIONS[d.qIds[d.round]];
+                document.getElementById('q-btn-'+realQ.c).classList.add('correct');
+                let score = 0;
+                if(ansIdx === realQ.c) { score = Math.max(10, quizTimeLeft); playSfx('crit'); } else if(ansIdx !== -1) { document.getElementById('q-btn-'+ansIdx).classList.add('wrong'); playSfx('fail'); } else { playSfx('fail'); }
+                let isP1 = d.p1 === myId; let updateData = {};
+                if(isP1) { updateData.s1 = d.s1 + score; updateData.p1Done = true; } else { updateData.s2 = d.s2 + score; updateData.p2Done = true; }
+                db.ref("quiz_battles/" + activeQuizId).update(updateData).then(() => { checkRoundEnd(activeQuizId); });
+            });
+        }
+        function checkRoundEnd(qid) { db.ref("quiz_battles/" + qid).transaction(d => { if(d && d.p1Done && d.p2Done) { d.round++; d.p1Done = false; d.p2Done = false; } return d; }); }
+
+        function startBattle(bid) {
+            document.getElementById('lobby-screen').classList.add('hidden'); document.getElementById("modal-battle").classList.remove("hidden");
+            db.ref("battles/" + bid).on('value', snap => {
+                if(!snap.exists()) { forceExitBattle(false); return; }
+                const b = snap.val(); const isP1 = b.p1 === myId; const myHp = isP1 ? b.p1Hp : b.p2Hp; const enHp = isP1 ? b.p2Hp : b.p1Hp; const enId = isP1 ? b.p2 : b.p1;
+                document.getElementById("hp-me").style.width = myHp + "%"; document.getElementById("hp-en").style.width = enHp + "%"; document.getElementById("battle-log").innerText = b.log;
+                if(!document.getElementById("battle-char-me")) { setupBattleScene(enId); }
+                if(b.turn === myId && myHp > 0 && enHp > 0) { if(document.getElementById("combo-area").classList.contains('hidden')) startComboGame(); }
+                else { document.getElementById("combo-area").classList.add("hidden"); if(comboTimer) clearInterval(comboTimer); }
+                if(myHp <= 0 || enHp <= 0) {
+                    setTimeout(() => { alert(myHp <= 0 ? "KAYBETTİN..." : "KAZANDIN! +100 HYPE"); db.ref("players/" + myId).update({battle: null, hype: player.hype + (myHp > 0 ? 100 : 0)}); if(!isP1) db.ref("battles/" + bid).remove(); location.reload(); }, 2000);
+                }
+            });
+        }
+        function setupBattleScene(enId) {
+            document.querySelectorAll('.in-battle').forEach(el => el.remove());
+            let myLookCopy = JSON.parse(JSON.stringify(myLook)); let myClone = document.getElementById("player-char").cloneNode(true); myClone.id = "battle-char-me"; myClone.classList.add('in-battle'); document.getElementById("my-slot").appendChild(myClone); renderChar("battle-char-me", myLookCopy); 
+            if(enId === 'bot') {
+                let enClone = document.getElementById("player-char").cloneNode(true); enClone.id = "battle-char-en"; enClone.classList.add('in-battle'); document.getElementById("enemy-slot").appendChild(enClone); document.getElementById("name-en").innerText = "MC BOT"; renderChar("battle-char-en", {head: Math.floor(Math.random()*heads.length), topColor: Math.floor(Math.random()*5), botColor: Math.floor(Math.random()*5), hat: true, chain: true});
+            } else {
+                db.ref("players/" + enId).once('value', s => { let enData = s.val(); let enClone = document.getElementById("player-char").cloneNode(true); enClone.id = "battle-char-en"; enClone.classList.add('in-battle'); document.getElementById("enemy-slot").appendChild(enClone); document.getElementById("name-en").innerText = enData.name; renderChar("battle-char-en", enData.look); });
+            }
+        }
+        function startTraining() { document.getElementById('lobby-screen').classList.add('hidden'); document.getElementById("modal-battle").classList.remove("hidden"); activeBattleId = 'training'; document.getElementById("hp-me").style.width = "100%"; document.getElementById("hp-en").style.width = "100%"; document.getElementById("battle-log").innerText = "ANTRENMAN BAŞLADI!"; if(!document.getElementById("battle-char-me")) { setupBattleScene('bot'); } startComboGame(); }
+        function startComboGame() { document.getElementById("combo-area").classList.remove("hidden"); document.getElementById("battle-log").innerText = "FLOW ZAMANI! OKLARA BAS!"; const directions = ['up', 'down', 'left', 'right']; comboSequence = []; currentStep = 0; let html = ""; for(let i=0; i<5; i++) { let d = directions[Math.floor(Math.random() * 4)]; comboSequence.push(d); html += `<div class="combo-arrow" id="arrow-${i}"><i class="fas fa-arrow-${d}"></i></div>`; } document.getElementById("combo-display").innerHTML = html; timeLeft = 100; if(comboTimer) clearInterval(comboTimer); comboTimer = setInterval(() => { timeLeft -= 2.5; document.getElementById("timer-bar").style.width = timeLeft + "%"; if(timeLeft <= 0) { failCombo("SÜRE DOLDU!"); } }, 50); }
+        function handleInput(dir) { if(timeLeft <= 0) return; if(dir === comboSequence[currentStep]) { playSfx('arrow'); document.getElementById(`arrow-${currentStep}`).classList.add('correct'); currentStep++; if(currentStep >= comboSequence.length) successCombo(); } else { failCombo("FLOW BOZULDU!"); } }
+        function successCombo() { clearInterval(comboTimer); document.getElementById("combo-area").classList.add("hidden"); playSfx('crit'); let char = document.getElementById("battle-char-me"); if(char) { char.classList.add("anim-hit"); setTimeout(() => char.classList.remove("anim-hit"), 400); } submitMove(30, "🔥 EFSANE FLOW! (30)"); }
+        function failCombo(reason) { clearInterval(comboTimer); playSfx('fail'); document.getElementById("combo-display").innerHTML = "<h2 style='color:red'>HATA!</h2>"; setTimeout(() => { document.getElementById("combo-area").classList.add("hidden"); submitMove(5, reason + " (5)"); }, 500); }
+        function submitMove(dmg, msg) {
+            if(activeBattleId === 'training') {
+                let curHp = parseInt(document.getElementById("hp-en").style.width) || 100; let newHp = curHp - dmg; document.getElementById("hp-en").style.width = newHp + "%"; document.getElementById("battle-log").innerText = "SEN: " + msg; let botChar = document.getElementById("battle-char-en"); if(botChar) { botChar.classList.add("anim-hit"); setTimeout(()=>botChar.classList.remove("anim-hit"), 400); }
+                if(newHp <= 0) { alert("KAZANDIN! (Antrenman Bitti)"); forceExitBattle(); } else { setTimeout(() => { document.getElementById("battle-log").innerText = "MC BOT saldırıyor..."; setTimeout(() => { let meHp = parseInt(document.getElementById("hp-me").style.width) || 100; meHp -= Math.floor(Math.random() * 20) + 5; document.getElementById("hp-me").style.width = meHp + "%"; let meChar = document.getElementById("battle-char-me"); if(meChar) { meChar.classList.add("anim-hit"); setTimeout(()=>meChar.classList.remove("anim-hit"), 400); } if(meHp <= 0) { alert("KAYBETTİN... (Antrenman Bitti)"); forceExitBattle(); } else { startComboGame(); } }, 1000); }, 1000); } return;
+            }
+            if(!activeBattleId) return;
+            db.ref("battles/" + activeBattleId).transaction(b => { if(b) { if(b.p1 === myId) { b.p2Hp -= dmg; b.turn = b.p2; } else { b.p1Hp -= dmg; b.turn = b.p1; } b.log = player.name + ": " + msg; } return b; });
+        }
+        document.addEventListener('keydown', (e) => { if(document.getElementById("combo-area").classList.contains("hidden")) return; if(e.key === "ArrowUp") handleInput('up'); if(e.key === "ArrowDown") handleInput('down'); if(e.key === "ArrowLeft") handleInput('left'); if(e.key === "ArrowRight") handleInput('right'); });
+
+        // --- UI ---
+        function loginWithGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+        function loginGuest() { auth.signInAnonymously(); }
+        function logout() { auth.signOut().then(() => location.reload()); }
+        function showGame() { document.getElementById('auth-screen').style.display='none'; document.getElementById('setup-screen').classList.add('hidden'); document.getElementById('app-container').classList.remove('hidden'); document.getElementById('ui-bottom').classList.remove('hidden'); updateUI(); renderChar('player-char', myLook); }
+        function showSetup() { document.getElementById('auth-screen').classList.add('hidden'); document.getElementById('setup-screen').classList.remove('hidden'); }
+        function completeSetup() { let name = document.getElementById('setup-name').value.trim(); if(!name) return; player.name = name; player.money = 500; db.ref('players/' + myId).update(player); }
+        function updateUI() { document.getElementById('d-lvl').innerText = player.level; document.getElementById('d-hype').innerText = player.hype; document.getElementById('d-money').innerText = player.money + "₺"; }
+        function openNameChange() { let newName = prompt("İsim:", player.name); if(newName) db.ref('players/' + myId).update({name: newName}); }
+        function showWelcome(n){document.getElementById('welcome-name').innerText=n;document.getElementById('welcome-screen').style.display='flex';}
+        function closeWelcome(){document.getElementById('welcome-screen').style.display='none'; isMuted=true; toggleMusic();}
+        function openMarket() { document.getElementById("market-screen").classList.remove("hidden"); document.getElementById("market-money").innerText = player.money + "₺"; renderMarket(); }
+        function closeMarket() { document.getElementById("market-screen").classList.add("hidden"); }
+        function renderMarket() { let h = ""; SHOP_ITEMS.forEach(i => { let owned = player.inventory && player.inventory[i.id]; let iconStyle = ""; if((i.type === 'top' || i.type === 'bot') && colors[i.val]) { iconStyle = `background: ${colors[i.val]}`; } else if(i.type === 'top') { iconStyle = `background:${colors[i.val]}`; } else if(i.type === 'bot') { iconStyle = `background:${colors[i.val]}`; } let icon = i.type==='top' ? `<div class="icon-top" style="${iconStyle}"></div>` : (i.type==='bot' ? `<div class="icon-bot"><div class="icon-leg" style="${iconStyle}"></div><div class="icon-leg" style="${iconStyle}"></div></div>` : '<div class="icon-chain"></div>'); h += `<div class="market-item ${owned?'owned':''}"><div class="item-preview">${icon}</div><div><div class="item-name">${i.name}</div><div class="item-price">${owned?'ALINDI':i.price+'₺'}</div></div>${!owned?`<button class="buy-btn" onclick="buyItem('${i.id}')">AL</button>`:''}</div>`; }); document.getElementById("market-list").innerHTML = h; }
+        function buyItem(id) { let it = SHOP_ITEMS.find(i=>i.id===id); if(player.money>=it.price) { if(!player.inventory) player.inventory={}; player.inventory[id]=true; player.money-=it.price; db.ref('players/'+myId).update({money:player.money, inventory:player.inventory}); alert("Aldın!"); renderMarket(); updateUI(); } else alert("Para yok!"); }
+        function openLeaderboard() { document.getElementById("leaderboard-screen").classList.remove("hidden"); let list = document.getElementById("lb-list"); list.innerHTML = "Yükleniyor..."; db.ref("players").once("value", snap => { let p = []; snap.forEach(c => { if(c.val().name) p.push(c.val()) }); p.sort((a,b)=>b.hype-a.hype); let h = ""; p.slice(0,20).forEach((u,i) => { h += `<div class="lb-item ${u.name===player.name?'me':''}"><div>#${i+1} ${u.name}</div><div>${u.hype} 🔥</div></div>`; }); list.innerHTML = h; }); }
+        function closeLeaderboard() { document.getElementById("leaderboard-screen").classList.add("hidden"); }
+        let chatListener; function openChat() { document.getElementById("chat-screen").classList.remove("hidden"); document.getElementById("chat-messages").innerHTML = ""; chatListener = db.ref("global_chat").limitToLast(20).on("child_added", snap => { let m = snap.val(); let cls = m.name===player.name ? "me" : "other"; document.getElementById("chat-messages").innerHTML += `<div class="chat-bubble ${cls}"><div class="chat-name">${m.name}</div>${m.msg}</div>`; }); } function closeChat() { document.getElementById("chat-screen").classList.add("hidden"); if(chatListener) db.ref("global_chat").off(); } function sendChat() { let i = document.getElementById("chat-input"); if(i.value.trim()) { db.ref("global_chat").push({name:player.name, msg:i.value.trim(), time:Date.now()}); i.value=""; } }
+        function enterLobby() { document.getElementById('lobby-screen').classList.remove('hidden'); renderLobby(); }
+        function renderLobby() { db.ref('players').limitToLast(20).once('value', snap => { let html = ""; snap.forEach(s => { if(s.key !== myId && s.val().name && s.val().online) { html += `<div class="list-item"><div><div class="item-title">${s.val().name}</div><div class="item-sub">${s.val().hype} HYPE</div></div><button class="vs-btn" onclick="sendChallenge('${s.key}', '${s.val().name}')">MEYDAN OKU</button></div>`; } }); document.getElementById('lobby-list').innerHTML = html || "<div style='text-align:center; margin-top:20px; color:#666;'>Kimse Online Değil.</div>"; }); }
+        function sendChallenge(tid, tname) { db.ref('players/' + tid).update({ request: { from: myId, name: player.name, type: 'battle' } }); alert("İstek gönderildi!"); }
+        function acceptChallenge() { const req = player.request; if(req.type === 'quiz') { const qid = "quiz_" + Date.now(); let qIds = []; while(qIds.length < 5) { let r = Math.floor(Math.random() * TR_RAP_QUESTIONS.length); if(qIds.indexOf(r) === -1) qIds.push(r); } db.ref("quiz_battles/" + qid).set({ p1: req.from, p2: myId, s1: 0, s2: 0, round: 0, qIds: qIds, p1Done: false, p2Done: false }).then(() => { db.ref("players/" + myId).update({ battle: qid, request: null }); db.ref("players/" + req.from).update({ battle: qid }); document.getElementById('challenge-popup').style.display = 'none'; }); } else { const bid = "bat_" + Date.now(); db.ref("battles/" + bid).set({ p1: req.from, p2: myId, turn: req.from, p1Hp: 100, p2Hp: 100, log: "SAVAŞ BAŞLADI!" }).then(() => { db.ref("players/" + myId).update({ battle: bid, request: null }); db.ref("players/" + req.from).update({ battle: bid }); document.getElementById('challenge-popup').style.display = 'none'; }); } }
+        function declineChallenge() { db.ref('players/' + myId).update({ request: null }); document.getElementById('challenge-popup').classList.add('hidden'); document.getElementById('challenge-popup').style.display = "none"; }
+        function exitLobby() { document.getElementById('lobby-screen').classList.add('hidden'); }
+        function forceExitBattle() { if(activeBattleId && activeBattleId !== 'training') { db.ref("battles/" + activeBattleId).off(); db.ref("players/" + myId).update({battle: null}); } activeBattleId = null; document.getElementById("modal-battle").classList.add("hidden"); document.querySelectorAll(".in-battle").forEach(e=>e.remove()); showGame(); }
+        function cycleHead() { myLook.head=(myLook.head+1)%heads.length; renderChar('player-char', myLook); }
+        function cycleColor(p) { let c = p==='top'?myLook.topColor:myLook.botColor; for(let i=0; i<colors.length; i++) { let n = (c + 1 + i) % colors.length; let itemId = (p==='top'?'top_':'bot_') + n; if (n === 0 || (player.inventory && player.inventory[itemId])) { if(p==='top') myLook.topColor = n; else myLook.botColor = n; break; } } renderChar('player-char', myLook); }
+        function toggleHat() { myLook.hat = !myLook.hat; renderChar('player-char', myLook); }
+        function toggleChain() { myLook.chain = !myLook.chain; renderChar('player-char', myLook); }
+        function toggleModel() { myLook.tank = !myLook.tank; renderChar('player-char', myLook); }
+        function saveCharacter() { db.ref('players/'+myId).update({look:myLook}); alert("Kaydedildi!"); }
+        function renderChar(wId, l) { let el = document.getElementById(wId); if(!el) return; el.querySelector('.c-head').src=heads[l.head]; el.querySelector('.c-body').style.background = colors[l.topColor]; el.querySelector('.c-arm.arm-l').style.background = colors[l.topColor]; el.querySelector('.c-arm.arm-r').style.background = colors[l.topColor]; let legs = el.querySelectorAll('.c-leg'); legs.forEach(lg => lg.style.background = colors[l.botColor]); el.querySelector('.c-hat').style.display=l.hat?'block':'none'; el.querySelector('.c-chain').style.display=l.chain?'block':'none'; el.querySelector('.c-tank').style.display=l.tank?'block':'none'; el.querySelector('#h-details').style.display=l.tank?'none':'block'; if(l.tank) el.querySelectorAll('.c-arm').forEach(a=>a.style.backgroundColor='#f1c27d'); }
+        function openScreen(s){ document.querySelectorAll('.modal').forEach(m=>m.classList.add('hidden')); if(s==='lobby') enterLobby(); }
+    </script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+{
+  "appId": "com.meteurgup.flowmaster",
+  "appName": "FlowMaster",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}
