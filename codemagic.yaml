@@ -33,14 +33,17 @@ workflows:
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
 
-  ios-workflow:
-    name: iOS Workflow
+  ios-app-store-workflow:
+    name: iOS App Store Workflow
     max_build_duration: 60
     instance_type: mac_mini_m1
     working_directory: flowify_mobile
     environment:
       groups:
-        - apple_auth # Defined in Codemagic UI for App Store Connect
+        - apple_auth
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.metestudios.flowify
       flutter: stable
       xcode: latest
       cocoapods: default
@@ -60,6 +63,12 @@ workflows:
           find . -name "Podfile" -execdir pod install \;
       - name: Build iOS IPA
         script: |
-          flutter build ipa --release --no-codesign
+          flutter build ipa --release \
+            --bundle-sks-path ios/Runner/Assets.xcassets \
+            --export-options-plist=$HOME/export_options.plist
     artifacts:
       - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
