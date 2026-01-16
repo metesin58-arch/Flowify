@@ -1,0 +1,18 @@
+
+{
+  "rules": {
+    ".read": true,
+    ".write": true,
+    "public_users": {
+      ".indexOn": ["respect", "monthly_listeners"]
+    },
+    "games": {
+      ".indexOn": ["status"]
+    },
+    "leaderboards": {
+      "rapquiz": {
+        ".indexOn": ["score"]
+      }
+    }
+  }
+}
