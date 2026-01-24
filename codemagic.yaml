@@ -1,0 +1,48 @@
+workflows:
+  ios-workflow:
+    name: iOS workflow
+    instance_type: mac_mini_m2
+    max_build_duration: 120
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.metestudios.flowify
+      vars:
+        XCODE_WORKSPACE: "ios/App/App.xcworkspace"
+        XCODE_SCHEME: "App"
+        APP_STORE_APPLE_ID: 6740697960
+      node: latest
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Install dependencies
+        script: npm install
+      - name: Build web project
+        script: npm run build
+      - name: Capacitor Sync
+        script: npx cap sync ios
+      - name: Set up code signing
+        script: |
+          keychain initialize
+          app-store-connect fetch-signing-files "com.metestudios.flowify" --type IOS_APP_STORE --create
+          keychain add-certificates
+      - name: Set up code signing settings on Xcode project
+        script: xcode-project use-profiles
+      - name: Increment build number
+        script: |
+          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-app-store-build-number "$APP_STORE_APPLE_ID")
+          agvtool new-version -all $(($LATEST_BUILD_NUMBER + 1))
+      - name: Build ipa for distribution
+        script: |
+          xcode-project build-ipa \
+            --workspace "$XCODE_WORKSPACE" \
+            --scheme "$XCODE_SCHEME"
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        beta_groups:
+          - Internal
