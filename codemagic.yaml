@@ -8,12 +8,10 @@ workflows:
       cocoapods: default
       groups:
         - app_store
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.metestudios.flowify
       vars:
         BUNDLE_ID: "com.metestudios.flowify"
         XCODE_SCHEME: "App"
+        TEAM_ID: "ERUH5NNQUB"
     scripts:
       - name: Install dependencies
         script: npm install
@@ -35,36 +33,40 @@ workflows:
           keychain initialize
           
           # Save API key to file
-          echo -n "$APP_STORE_CONNECT_PRIVATE_KEY" > /tmp/AuthKey.p8
+          echo "$APP_STORE_CONNECT_PRIVATE_KEY" > /tmp/AuthKey.p8
           
-          # Fetch signing files using API key
+          echo "=== Testing API Key Connection ==="
+          app-store-connect list-certificates \
+            --issuer-id "87981dc2-2287-419d-8eef-4560424acbdd" \
+            --key-id "WJ3MJX52WS" \
+            --private-key @file:/tmp/AuthKey.p8 || echo "Certificate listing failed"
+          
+          echo "=== Fetching/Creating Signing Files ==="
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
             --create \
             --issuer-id "87981dc2-2287-419d-8eef-4560424acbdd" \
             --key-id "WJ3MJX52WS" \
-            --private-key @file:/tmp/AuthKey.p8
+            --private-key @file:/tmp/AuthKey.p8 \
+            --team-id "$TEAM_ID"
           
-          # Add certificates to keychain
+          echo "=== Adding Certificates ==="
           keychain add-certificates
           
-          # Apply profiles - use workspace for accuracy
-          xcode-project use-profiles --project ios/App/App.xcodeproj --export-options-plist ~/export_options.plist
-          
-          # Debug: show profile info
           echo "=== Installed Profiles ==="
-          ls -la ~/Library/MobileDevice/Provisioning\ Profiles/ || echo "No profiles found"
+          ls -la ~/Library/MobileDevice/Provisioning\ Profiles/ || echo "No profiles directory"
+          
+          echo "=== Applying Profiles to Project ==="
+          xcode-project use-profiles --project ios/App/App.xcodeproj
       
       - name: Build IPA
         script: |
           xcode-project build-ipa \
             --workspace ios/App/App.xcworkspace \
-            --scheme "$XCODE_SCHEME" \
-            --export-options-plist ~/export_options.plist
+            --scheme "$XCODE_SCHEME"
     
     artifacts:
       - build/ios/ipa/*.ipa
-      - ~/export_options.plist
     
     publishing:
       app_store_connect:
