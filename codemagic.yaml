@@ -3,8 +3,6 @@ workflows:
     name: iOS Release Build
     instance_type: mac_mini_m2
     max_build_duration: 60
-    integrations:
-      app_store_connect: Zeal
     environment:
       xcode: latest
       cocoapods: default
@@ -12,6 +10,8 @@ workflows:
         BUNDLE_ID: "com.metestudios.flowify"
         XCODE_SCHEME: "App"
         TEAM_ID: "ERUH5NNQUB"
+        APP_STORE_CONNECT_KEY_IDENTIFIER: "WJ3MJX52WS"
+        APP_STORE_CONNECT_ISSUER_ID: "87981dc2-2287-419d-8eef-4560424acbdd"
     scripts:
       - name: Install dependencies
         script: npm install
@@ -31,30 +31,33 @@ workflows:
       - name: Set up code signing
         script: |
           keychain initialize
-          app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
+          
+          # Save API key to file
+          echo -n "$APP_STORE_CONNECT_PRIVATE_KEY" > /tmp/AuthKey.p8
+          
+          # Fetch signing files using API key
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create \
+            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
+            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
+            --private-key @file:/tmp/AuthKey.p8
+          
           keychain add-certificates
-          
-          # Get the provisioning profile name
-          PROFILE_PATH=$(ls ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision | head -1)
-          PROFILE_NAME=$(grep -aA1 "Name" "$PROFILE_PATH" | grep string | sed -E 's/.*<string>(.*)<\/string>.*/\1/' | head -1)
-          PROFILE_UUID=$(grep -aA1 "UUID" "$PROFILE_PATH" | grep string | sed -E 's/.*<string>(.*)<\/string>.*/\1/' | head -1)
-          echo "Profile Name: $PROFILE_NAME"
-          echo "Profile UUID: $PROFILE_UUID"
-          
-          # Apply profiles to project
           xcode-project use-profiles --project ios/App/App.xcodeproj
       
       - name: Build IPA
         script: |
           xcode-project build-ipa \
             --workspace ios/App/App.xcworkspace \
-            --scheme "$XCODE_SCHEME" \
-            --archive-flags="-destination 'generic/platform=iOS'"
+            --scheme "$XCODE_SCHEME"
     
     artifacts:
       - build/ios/ipa/*.ipa
     
     publishing:
       app_store_connect:
-        auth: integration
+        api_key: /tmp/AuthKey.p8
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         submit_to_testflight: true
