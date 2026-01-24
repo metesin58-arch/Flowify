@@ -4,8 +4,6 @@ workflows:
     instance_type: mac_mini_m2
     max_build_duration: 120
     environment:
-      groups:
-        - apple_auth
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.metestudios.flowify
