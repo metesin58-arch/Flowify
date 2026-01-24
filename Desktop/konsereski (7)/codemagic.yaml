@@ -10,6 +10,7 @@ workflows:
         distribution_type: app_store
         bundle_identifier: com.metestudios.flowify
       vars:
+        BUNDLE_ID: "com.metestudios.flowify"
         XCODE_WORKSPACE: "ios/App/App.xcworkspace"
         XCODE_SCHEME: "App"
         APP_STORE_APPLE_ID: 6740697960
