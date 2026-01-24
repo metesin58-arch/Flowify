@@ -1,0 +1,7 @@
+flowify_mobile/
+node_modules/
+.gradle/
+.kotlin/
+build/
+android/
+ios/

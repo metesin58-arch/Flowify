@@ -1,48 +1,49 @@
 workflows:
-  ios-workflow:
-    name: iOS workflow
+  ios-release:
+    name: iOS Release Build
     instance_type: mac_mini_m2
-    max_build_duration: 120
+    max_build_duration: 60
+    integrations:
+      app_store_connect: Zeal
     environment:
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.metestudios.flowify
-      vars:
-        XCODE_WORKSPACE: "ios/App/App.xcworkspace"
-        XCODE_SCHEME: "App"
-        APP_STORE_APPLE_ID: 6740697960
-      node: latest
       xcode: latest
       cocoapods: default
+      vars:
+        BUNDLE_ID: "com.metestudios.flowify"
+        XCODE_SCHEME: "App"
     scripts:
       - name: Install dependencies
         script: npm install
-      - name: Build web project
+      
+      - name: Build web assets
         script: npm run build
-      - name: Capacitor Sync
-        script: npx cap sync ios
+      
+      - name: Capacitor Sync & Assets
+        script: |
+          npm run assets:generate
+          npx cap add ios || true
+          npx cap sync ios
+      
+      - name: Install CocoaPods
+        script: cd ios/App && pod install
+      
       - name: Set up code signing
         script: |
           keychain initialize
-          app-store-connect fetch-signing-files "com.metestudios.flowify" --type IOS_APP_STORE --create
+          app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
           keychain add-certificates
-      - name: Set up code signing settings on Xcode project
-        script: xcode-project use-profiles
-      - name: Increment build number
-        script: |
-          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-app-store-build-number "$APP_STORE_APPLE_ID")
-          agvtool new-version -all $(($LATEST_BUILD_NUMBER + 1))
-      - name: Build ipa for distribution
+          xcode-project use-profiles
+      
+      - name: Build IPA
         script: |
           xcode-project build-ipa \
-            --workspace "$XCODE_WORKSPACE" \
+            --workspace ios/App/App.xcworkspace \
             --scheme "$XCODE_SCHEME"
+    
     artifacts:
       - build/ios/ipa/*.ipa
-      - /tmp/xcodebuild_logs/*.log
+    
     publishing:
       app_store_connect:
         auth: integration
         submit_to_testflight: true
-        beta_groups:
-          - Internal

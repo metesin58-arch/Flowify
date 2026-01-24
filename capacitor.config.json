@@ -1,0 +1,13 @@
+{
+  "appId": "com.metestudios.flowify",
+  "appName": "Flowify",
+  "webDir": "dist",
+  "ios": {
+    "contentInset": "always"
+  },
+  "plugins": {
+    "AdMob": {
+      "iosAppId": "ca-app-pub-4965929442860631~8109023834"
+    }
+  }
+}
