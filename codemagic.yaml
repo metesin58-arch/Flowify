@@ -3,46 +3,84 @@ workflows:
     name: iOS Release Build
     instance_type: mac_mini_m2
     max_build_duration: 60
+
     integrations:
       app_store_connect: Rap
+
     environment:
       xcode: latest
       cocoapods: default
       vars:
         BUNDLE_ID: "com.metestudios.flowify"
         XCODE_SCHEME: "App"
+        TEAM_ID: "ERUH5NNQUB"
+        PROFILE_NAME: "AppStore_com.metestudios.flowify"
+
     scripts:
       - name: Install dependencies
         script: npm install
-      
+
       - name: Build web assets
         script: npm run build
-      
-      - name: Capacitor Sync & Assets
-        script: |
-          npm run assets:generate
-          npx cap add ios || true
-          npx cap sync ios
-      
+
+      - name: Capacitor Sync
+        script: npx cap sync ios
+
       - name: Install CocoaPods
-        script: cd ios/App && pod install
-      
-      - name: Set up code signing
+        script: |
+          cd ios/App
+          pod install
+
+      - name: Fetch signing files
         script: |
           keychain initialize
           app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
           keychain add-certificates
-          xcode-project use-profiles --project ios/App/App.xcodeproj
-      
-      - name: Build IPA
+
+      - name: Create exportOptions.plist
         script: |
-          xcode-project build-ipa \
-            --workspace ios/App/App.xcworkspace \
-            --scheme "$XCODE_SCHEME"
-    
+          cat > /Users/builder/exportOptions.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>app-store</string>
+              <key>teamID</key>
+              <string>$TEAM_ID</string>
+              <key>signingStyle</key>
+              <string>manual</string>
+              <key>provisioningProfiles</key>
+              <dict>
+                  <key>$BUNDLE_ID</key>
+                  <string>$PROFILE_NAME</string>
+              </dict>
+          </dict>
+          </plist>
+          EOF
+          cat /Users/builder/exportOptions.plist
+
+      - name: Archive app (FORCED SIGNING)
+        script: |
+          xcodebuild archive \
+            -workspace ios/App/App.xcworkspace \
+            -scheme "$XCODE_SCHEME" \
+            -archivePath build/ios/App.xcarchive \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM="$TEAM_ID" \
+            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
+            CODE_SIGN_IDENTITY="Apple Distribution"
+
+      - name: Export IPA
+        script: |
+          xcodebuild -exportArchive \
+            -archivePath build/ios/App.xcarchive \
+            -exportOptionsPlist /Users/builder/exportOptions.plist \
+            -exportPath build/ios/ipa
+
     artifacts:
       - build/ios/ipa/*.ipa
-    
+
     publishing:
       app_store_connect:
         auth: integration
