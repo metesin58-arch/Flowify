@@ -11,6 +11,7 @@ workflows:
       vars:
         BUNDLE_ID: "com.metestudios.flowify"
         XCODE_SCHEME: "App"
+        TEAM_ID: "ERUH5NNQUB"
     scripts:
       - name: Install dependencies
         script: npm install
@@ -32,6 +33,15 @@ workflows:
           keychain initialize
           app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
           keychain add-certificates
+          
+          # Get the provisioning profile name
+          PROFILE_PATH=$(ls ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision | head -1)
+          PROFILE_NAME=$(grep -aA1 "Name" "$PROFILE_PATH" | grep string | sed -E 's/.*<string>(.*)<\/string>.*/\1/' | head -1)
+          PROFILE_UUID=$(grep -aA1 "UUID" "$PROFILE_PATH" | grep string | sed -E 's/.*<string>(.*)<\/string>.*/\1/' | head -1)
+          echo "Profile Name: $PROFILE_NAME"
+          echo "Profile UUID: $PROFILE_UUID"
+          
+          # Apply profiles to project
           xcode-project use-profiles --project ios/App/App.xcodeproj
       
       - name: Build IPA
@@ -39,7 +49,7 @@ workflows:
           xcode-project build-ipa \
             --workspace ios/App/App.xcworkspace \
             --scheme "$XCODE_SCHEME" \
-            --archive-flags="CODE_SIGN_STYLE=Automatic"
+            --archive-flags="-destination 'generic/platform=iOS'"
     
     artifacts:
       - build/ios/ipa/*.ipa
