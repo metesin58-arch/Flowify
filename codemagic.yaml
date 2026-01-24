@@ -24,7 +24,9 @@ workflows:
         script: npm run build
 
       - name: Capacitor Sync
-        script: npx cap sync ios
+        script: |
+          npx cap add ios || true
+          npx cap sync ios
 
       - name: Install CocoaPods
         script: |
