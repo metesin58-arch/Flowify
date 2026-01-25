@@ -29,6 +29,16 @@ platform :ios do
       output_path: "fastlane/profiles"
     )
 
+    # Set Team ID in the project file
+    update_project_team(
+      path: "App.xcodeproj",
+      team_id: "ERUH5NNQUB"
+    )
+
+    # Force Pods to use the correct team or skip signing for resource bundles
+    # This fixes the "requires a development team" error for Google Ads bundles
+    sh("sed -i '' 's/DEVELOPMENT_TEAM = \"\";/DEVELOPMENT_TEAM = \"ERUH5NNQUB\";/g' Pods/Pods.xcodeproj/project.pbxproj || true")
+
     # Build the app - gym will find the profile automatically
     gym(
       scheme: "App",
@@ -41,7 +51,7 @@ platform :ios do
       export_options: {
         method: "app-store",
         provisioningProfiles: {
-          "com.metestudios.flowifygame" => "AppStore com.metestudios.flowifygame"
+          "com.metestudios.flowifygame" => "com.metestudios.flowifygame AppStore"
         }
       }
     )
