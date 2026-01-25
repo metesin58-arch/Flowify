@@ -117,16 +117,20 @@ jobs:
           
       - name: Build Archive
         run: |
+          # Fix Pods signing issues by disabling signing for all Pod targets
+          cd ios/App/Pods
+          for project in *.xcodeproj; do
+            sed -i '' 's/CODE_SIGNING_REQUIRED = YES/CODE_SIGNING_REQUIRED = NO/g' "$project/project.pbxproj" || true
+            sed -i '' 's/CODE_SIGN_IDENTITY = "iPhone Distribution"/CODE_SIGN_IDENTITY = ""/g' "$project/project.pbxproj" || true
+            sed -i '' 's/CODE_SIGNING_ALLOWED = YES/CODE_SIGNING_ALLOWED = NO/g' "$project/project.pbxproj" || true
+          done
+          cd ../../..
+
           xcodebuild -workspace ios/App/App.xcworkspace \
                      -scheme App \
                      -configuration Release \
                      -archivePath $PWD/build/App.xcarchive \
                      -sdk iphoneos \
-                     CODE_SIGN_STYLE=Manual \
-                     CODE_SIGN_IDENTITY="Apple Distribution" \
-                     PROVISIONING_PROFILE="${{ env.PROV_UUID }}" \
-                     PROVISIONING_PROFILE_SPECIFIER="${{ env.PROV_NAME }}" \
-                     DEVELOPMENT_TEAM=ERUH5NNQUB \
                      archive
 
       - name: Export IPA
