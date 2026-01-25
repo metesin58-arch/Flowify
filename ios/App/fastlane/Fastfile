@@ -3,12 +3,15 @@ default_platform(:ios)
 platform :ios do
   desc "Push a new beta build to TestFlight"
   lane :beta do
+    # CI environment setup
+    setup_ci
+
     # API Key setup
     api_key = app_store_connect_api_key(
       key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
       issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
       key_content: ENV["APP_STORE_CONNECT_KEY_CONTENT"],
-      is_key_content_base64: false # We will store the P8 content as raw text in secrets
+      is_key_content_base64: false
     )
 
     # Clean previous builds
@@ -17,8 +20,8 @@ platform :ios do
     # Fetch/Create Certificate
     get_certificates(
       api_key: api_key,
-      output_path: "fastlane/certificates",
-      development: false
+      development: false,
+      generate_apple_certs: true # Try to create if missing
     )
 
     # Fetch/Create Provisioning Profile
@@ -26,7 +29,7 @@ platform :ios do
       api_key: api_key,
       development: false,
       app_identifier: "com.metestudios.flowifygame",
-      output_path: "fastlane/profiles"
+      force: true # Force refresh profile since certs were cleaned
     )
 
     # Set Team ID in the project file
