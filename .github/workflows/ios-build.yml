@@ -22,8 +22,12 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
-          bundler-cache: true
           working-directory: ios/App
+
+      - name: Install Ruby dependencies
+        run: |
+          cd ios/App
+          bundle install
 
       - name: Install dependencies
         run: npm install
