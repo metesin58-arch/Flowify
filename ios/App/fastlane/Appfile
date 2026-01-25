@@ -1,0 +1,2 @@
+app_identifier("com.metestudios.flowifygame") # The bundle identifier of your app
+team_id("ERUH5NNQUB") # Your Apple Developer Team ID

@@ -9,12 +9,6 @@ jobs:
   build:
     runs-on: macos-15
     steps:
-      - name: Select latest Xcode
-        run: |
-          XCODE_PATH=$(ls -d /Applications/Xcode_*.app | sort -V | tail -n 1)
-          echo "Selected Xcode: $XCODE_PATH"
-          sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -23,6 +17,13 @@ jobs:
         with:
           node-version: 18
           cache: 'npm'
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+          working-directory: ios/App
 
       - name: Install dependencies
         run: npm install
@@ -35,134 +36,17 @@ jobs:
           npx cap add ios || true
           npx cap sync ios
 
-      - name: Install Apple Certificate
-        env:
-          P12_BASE64: ${{ secrets.IOS_P12_BASE64 }}
-          P12_PASSWORD: ${{ secrets.IOS_P12_PASSWORD }}
-        run: |
-          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
-          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
-          echo "$P12_BASE64" | base64 --decode > $CERTIFICATE_PATH
-          security create-keychain -p "temporary_password" $KEYCHAIN_PATH
-          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
-          security unlock-keychain -p "temporary_password" $KEYCHAIN_PATH
-          security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
-          security list-keychains -d user -s $KEYCHAIN_PATH $(security list-keychains -d user | xargs)
-
-      - name: Install and Extract Provisioning Profile
-        env:
-          PROV_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
-        run: |
-          PROV_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
-          mkdir -p "$PROV_DIR"
-          echo "$PROV_BASE64" | base64 --decode > "$PROV_DIR/temp.mobileprovision"
-          PROFILE_NAME=$(/usr/libexec/PlistBuddy -c "Print :Name" /dev/stdin <<< $(security cms -D -i "$PROV_DIR/temp.mobileprovision"))
-          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" /dev/stdin <<< $(security cms -D -i "$PROV_DIR/temp.mobileprovision"))
-          cp "$PROV_DIR/temp.mobileprovision" "$PROV_DIR/$PROFILE_UUID.mobileprovision"
-          echo "PROV_NAME=$PROFILE_NAME" >> $GITHUB_ENV
-          echo "PROV_UUID=$PROFILE_UUID" >> $GITHUB_ENV
-
       - name: Install CocoaPods
         run: |
           cd ios/App
           pod install
 
-      - name: Create ExportOptions.plist
-        run: |
-          cat <<EOF > ExportOptions.plist
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>method</key>
-            <string>app-store</string>
-            <key>teamID</key>
-            <string>ERUH5NNQUB</string>
-            <key>uploadSymbols</key>
-            <true/>
-            <key>compileBitcode</key>
-            <false/>
-            <key>provisioningProfiles</key>
-            <dict>
-              <key>com.metestudios.flowifygame</key>
-              <string>${{ env.PROV_NAME }}</string>
-            </dict>
-            <key>signingStyle</key>
-            <string>manual</string>
-            <key>signingCertificate</key>
-            <string>Apple Distribution</string>
-          </dict>
-          </plist>
-          EOF
-
-      - name: Update Build Number
+      - name: Run Fastlane Beta
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_KEY_CONTENT }}
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
         run: |
           cd ios/App
-          xcrun agvtool new-version -all ${{ github.run_number }}
-          echo "Build number updated to ${{ github.run_number }}"
-
-      - name: Update Xcode Signing Settings
-        run: |
-          # Use sed and build settings to force signing
-          cd ios/App/App.xcodeproj
-          PRODUCT_BUNDLE_IDENTIFIER="com.metestudios.flowifygame"
-          TEAM_ID="ERUH5NNQUB"
-          
-          # Force Manual signing and set Team/Profile at the project level
-          sed -i '' "s/ProvisioningStyle = Automatic;/ProvisioningStyle = Manual;/g" project.pbxproj
-          sed -i '' "s/DEVELOPMENT_TEAM = [^;]*;/DEVELOPMENT_TEAM = $TEAM_ID;/g" project.pbxproj
-          sed -i '' "s/PROVISIONING_PROFILE = [^;]*;/PROVISIONING_PROFILE = \"${{ env.PROV_UUID }}\";/g" project.pbxproj
-          sed -i '' "s/PROVISIONING_PROFILE_SPECIFIER = [^;]*;/PROVISIONING_PROFILE_SPECIFIER = \"${{ env.PROV_NAME }}\";/g" project.pbxproj
-          sed -i '' "s/CODE_SIGN_IDENTITY = \"iPhone Developer\";/CODE_SIGN_IDENTITY = \"Apple Distribution\";/g" project.pbxproj
-          
-      - name: Build Archive
-        run: |
-          # Fix Pods signing issues by disabling signing for all Pod targets
-          cd ios/App/Pods
-          for project in *.xcodeproj; do
-            sed -i '' 's/CODE_SIGNING_REQUIRED = YES/CODE_SIGNING_REQUIRED = NO/g' "$project/project.pbxproj" || true
-            sed -i '' 's/CODE_SIGN_IDENTITY = "iPhone Distribution"/CODE_SIGN_IDENTITY = ""/g' "$project/project.pbxproj" || true
-            sed -i '' 's/CODE_SIGNING_ALLOWED = YES/CODE_SIGNING_ALLOWED = NO/g' "$project/project.pbxproj" || true
-          done
-          cd ../../..
-
-          xcodebuild -workspace ios/App/App.xcworkspace \
-                     -scheme App \
-                     -configuration Release \
-                     -archivePath $PWD/build/App.xcarchive \
-                     -sdk iphoneos \
-                     archive
-
-      - name: Export IPA
-        run: |
-          mkdir -p build/ipa
-          xcodebuild -exportArchive \
-                     -archivePath $PWD/build/App.xcarchive \
-                     -exportOptionsPlist ExportOptions.plist \
-                     -exportPath $PWD/build/ipa \
-                     -allowProvisioningUpdates
-
-      - name: Validate and Upload to TestFlight
-        env:
-          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-          KEY_CONTENT_BASE64: ${{ secrets.APP_STORE_CONNECT_KEY_CONTENT }}
-        run: |
-          mkdir -p ~/.private_keys
-          python3 -c "import os, base64; key_id = os.environ['KEY_ID'].strip(); content = os.environ['KEY_CONTENT_BASE64'].strip(); decoded = base64.b64decode(content); f = open(os.path.expanduser(f'~/.private_keys/AuthKey_{key_id}.p8'), 'wb'); f.write(decoded); f.close()"
-          
-          echo "Validating App..."
-          xcrun altool --validate-app \
-            -f build/ipa/App.ipa \
-            -t ios \
-            --apiKey "$KEY_ID" \
-            --apiIssuer "$ISSUER_ID" \
-            --verbose
-          
-          echo "Uploading App..."
-          xcrun altool --upload-app \
-            -f build/ipa/App.ipa \
-            -t ios \
-            --apiKey "$KEY_ID" \
-            --apiIssuer "$ISSUER_ID" \
-            --verbose
+          bundle exec fastlane beta
