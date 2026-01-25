@@ -33,7 +33,24 @@ jobs:
 
       - name: Capacitor Sync
         run: |
-          npx cap add ios || true
+          # If ios folder exists but doesn't have an Xcode project, Capacitor 'add' will fail but 'sync' won't work.
+          # We need to ensure the platform is properly added.
+          if [ ! -d "ios/App/App.xcodeproj" ]; then
+            echo "Xcode project not found, re-adding ios platform..."
+            # Move fastlane files out temporarily to avoid them being deleted if we were to wipe the folder
+            mkdir -p temp_fastlane
+            cp -r ios/App/fastlane temp_fastlane/ || true
+            cp ios/App/Gemfile temp_fastlane/ || true
+            
+            # Remove ios folder to allow a clean 'cap add'
+            rm -rf ios
+            npx cap add ios
+            
+            # Move fastlane files back
+            mkdir -p ios/App
+            cp -r temp_fastlane/fastlane ios/App/
+            cp temp_fastlane/Gemfile ios/App/
+          fi
           npx cap sync ios
 
       - name: Install CocoaPods
