@@ -1,0 +1,63 @@
+version: 2.1
+
+jobs:
+  build-and-deploy:
+    macos:
+      xcode: 15.4.0 # Match Xcode version used in Codemagic or stable version
+    
+    environment:
+      BUNDLE_ID: "com.metestudios.flowifygame"
+      TEAM_ID: "ERUH5NNQUB"
+
+    steps:
+      - checkout
+
+      - run:
+          name: Install Node.js
+          command: |
+            brew install node@18
+            brew link --overwrite node@18
+
+      - run:
+          name: Install npm dependencies
+          command: npm install
+
+      - run:
+          name: Build web assets
+          command: npm run build
+
+      - run:
+          name: Capacitor Sync & Reconstruction
+          command: |
+            if [ ! -f "ios/App/Podfile" ]; then
+              echo "Reconstructing iOS platform..."
+              mkdir -p temp_ios_meta
+              [ -d "ios/App/fastlane" ] && cp -r ios/App/fastlane temp_ios_meta/
+              [ -f "ios/App/Gemfile" ] && cp ios/App/Gemfile temp_ios_meta/
+              rm -rf ios
+              npx cap add ios
+              [ -d "temp_ios_meta/fastlane" ] && cp -r temp_ios_meta/fastlane ios/App/
+              [ -f "temp_ios_meta/Gemfile" ] && cp temp_ios_meta/Gemfile ios/App/
+            fi
+            npx cap sync ios
+
+      - run:
+          name: Install Ruby and CocoaPods
+          command: |
+            cd ios/App
+            bundle install
+            pod install
+
+      - run:
+          name: Fastlane Deploy
+          command: |
+            cd ios/App
+            bundle exec fastlane beta
+
+workflows:
+  build-workflow:
+    jobs:
+      - build-and-deploy:
+          filters:
+            branches:
+              only: main
