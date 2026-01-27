@@ -40,7 +40,7 @@ jobs:
               [ -f "temp_ios_meta/Gemfile" ] && cp temp_ios_meta/Gemfile ios/App/
             fi
             # Run sync but skip the automatic pod install to handle it manually with retries
-            npx cap sync ios --no-update || npx cap sync ios
+            npx cap sync ios --no-install
             
       - run:
           name: Install Ruby and CocoaPods
