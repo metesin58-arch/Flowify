@@ -15,11 +15,14 @@ workflows:
         XCODE_SCHEME: "App"
         TEAM_ID: "ERUH5NNQUB"
         PROFILE_NAME: "AppStore_com.metestudios.flowifygame"
-        APP_STORE_CONNECT_KEY_ID: $APP_STORE_CONNECT_KEY_ID
-        APP_STORE_CONNECT_ISSUER_ID: $APP_STORE_CONNECT_ISSUER_ID
-        APP_STORE_CONNECT_KEY_CONTENT: $APP_STORE_CONNECT_KEY_CONTENT
 
     scripts:
+      - name: Environment check
+        script: |
+          echo "Checking environment variables..."
+          [ -z "$APP_STORE_CONNECT_KEY_ID" ] && echo "ERROR: APP_STORE_CONNECT_KEY_ID is missing" || echo "APP_STORE_CONNECT_KEY_ID is set"
+          [ -z "$APP_STORE_CONNECT_ISSUER_ID" ] && echo "ERROR: APP_STORE_CONNECT_ISSUER_ID is missing" || echo "APP_STORE_CONNECT_ISSUER_ID is set"
+          [ -z "$APP_STORE_CONNECT_KEY_CONTENT" ] && echo "ERROR: APP_STORE_CONNECT_KEY_CONTENT is missing" || echo "APP_STORE_CONNECT_KEY_CONTENT is set"
       - name: Install dependencies
         script: npm install
 
