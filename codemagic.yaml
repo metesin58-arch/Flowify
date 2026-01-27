@@ -15,6 +15,9 @@ workflows:
         XCODE_SCHEME: "App"
         TEAM_ID: "ERUH5NNQUB"
         PROFILE_NAME: "AppStore_com.metestudios.flowifygame"
+        APP_STORE_CONNECT_KEY_ID: $APP_STORE_CONNECT_KEY_ID
+        APP_STORE_CONNECT_ISSUER_ID: $APP_STORE_CONNECT_ISSUER_ID
+        APP_STORE_CONNECT_KEY_CONTENT: $APP_STORE_CONNECT_KEY_CONTENT
 
     scripts:
       - name: Install dependencies
@@ -51,13 +54,6 @@ workflows:
         script: |
           cd ios/App
           bundle exec fastlane beta
-        test_report: ios/App/build/reports/junit.xml
-        env:
-          # Mapping Github secrets to environment variables if needed
-          # Or ensuring they match what's in Fastfile
-          APP_STORE_CONNECT_KEY_ID: $APP_STORE_CONNECT_KEY_ID
-          APP_STORE_CONNECT_ISSUER_ID: $APP_STORE_CONNECT_ISSUER_ID
-          APP_STORE_CONNECT_KEY_CONTENT: $APP_STORE_CONNECT_KEY_CONTENT
 
     artifacts:
       - ios/App/build/*.ipa
