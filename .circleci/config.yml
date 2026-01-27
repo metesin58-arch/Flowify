@@ -39,14 +39,18 @@ jobs:
               [ -d "temp_ios_meta/fastlane" ] && cp -r temp_ios_meta/fastlane ios/App/
               [ -f "temp_ios_meta/Gemfile" ] && cp temp_ios_meta/Gemfile ios/App/
             fi
-            npx cap sync ios
-
+            # Run sync but skip the automatic pod install to handle it manually with retries
+            npx cap sync ios --no-update || npx cap sync ios
+            
       - run:
           name: Install Ruby and CocoaPods
           command: |
             cd ios/App
             bundle install
-            pod install
+            # Add retry logic for pod install due to transient network issues
+            for i in {1..3}; do
+              pod repo update && pod install && break || sleep 15
+            done
 
       - run:
           name: Fastlane Deploy
