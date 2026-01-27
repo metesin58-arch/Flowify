@@ -25,7 +25,16 @@ workflows:
 
       - name: Capacitor Sync
         script: |
-          npx cap add ios || true
+          if [ ! -f "ios/App/Podfile" ]; then
+            echo "iOS project incomplete (missing Podfile). Reconstructing..."
+            mkdir -p temp_ios_meta
+            [ -d "ios/App/fastlane" ] && cp -r ios/App/fastlane temp_ios_meta/
+            [ -f "ios/App/Gemfile" ] && cp ios/App/Gemfile temp_ios_meta/
+            rm -rf ios
+            npx cap add ios
+            [ -d "temp_ios_meta/fastlane" ] && cp -r temp_ios_meta/fastlane ios/App/
+            [ -f "temp_ios_meta/Gemfile" ] && cp temp_ios_meta/Gemfile ios/App/
+          fi
           npx cap sync ios
 
       - name: Install CocoaPods
