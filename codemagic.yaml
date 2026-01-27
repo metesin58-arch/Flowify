@@ -20,9 +20,11 @@ workflows:
       - name: Environment check
         script: |
           echo "Checking environment variables..."
-          [ -z "$APP_STORE_CONNECT_KEY_ID" ] && echo "ERROR: APP_STORE_CONNECT_KEY_ID is missing" || echo "APP_STORE_CONNECT_KEY_ID is set"
-          [ -z "$APP_STORE_CONNECT_ISSUER_ID" ] && echo "ERROR: APP_STORE_CONNECT_ISSUER_ID is missing" || echo "APP_STORE_CONNECT_ISSUER_ID is set"
-          [ -z "$APP_STORE_CONNECT_KEY_CONTENT" ] && echo "ERROR: APP_STORE_CONNECT_KEY_CONTENT is missing" || echo "APP_STORE_CONNECT_KEY_CONTENT is set"
+          echo "KEY_ID length: ${#APP_STORE_CONNECT_KEY_ID}"
+          echo "ISSUER_ID length: ${#APP_STORE_CONNECT_ISSUER_ID}"
+          echo "KEY_CONTENT length: ${#APP_STORE_CONNECT_KEY_CONTENT}"
+          if [ ${#APP_STORE_CONNECT_KEY_ID} -eq 0 ]; then echo "ERROR: KEY_ID IS EMPTY"; fi
+
       - name: Install dependencies
         script: npm install
 
@@ -48,18 +50,55 @@ workflows:
           cd ios/App
           pod install
 
-      - name: Install Ruby dependencies
+      - name: Fetch signing files
         script: |
-          cd ios/App
-          bundle install
+          keychain initialize
+          app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
+          keychain add-certificates
 
-      - name: Fastlane Build & Deploy
+      - name: Create exportOptions.plist
         script: |
-          cd ios/App
-          bundle exec fastlane beta
+          cat > /Users/builder/exportOptions.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>app-store</string>
+              <key>teamID</key>
+              <string>$TEAM_ID</string>
+              <key>signingStyle</key>
+              <string>manual</string>
+              <key>provisioningProfiles</key>
+              <dict>
+                  <key>$BUNDLE_ID</key>
+                  <string>$PROFILE_NAME</string>
+              </dict>
+          </dict>
+          </plist>
+          EOF
+          cat /Users/builder/exportOptions.plist
+
+      - name: Archive app
+        script: |
+          xcodebuild archive \
+            -workspace ios/App/App.xcworkspace \
+            -scheme "$XCODE_SCHEME" \
+            -archivePath build/ios/App.xcarchive \
+            -configuration Release \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM="$TEAM_ID" \
+            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME"
+
+      - name: Export IPA
+        script: |
+          xcodebuild -exportArchive \
+            -archivePath build/ios/App.xcarchive \
+            -exportOptionsPlist /Users/builder/exportOptions.plist \
+            -exportPath build/ios/ipa
 
     artifacts:
-      - ios/App/build/*.ipa
+      - build/ios/ipa/*.ipa
 
     publishing:
       app_store_connect:
