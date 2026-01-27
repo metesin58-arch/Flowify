@@ -8,6 +8,8 @@ workflows:
       app_store_connect: Rap
 
     environment:
+      groups:
+        - app_store_credentials # Create this group in Codemagic UI and add your secrets there
       xcode: latest
       cocoapods: default
       vars:
