@@ -11,10 +11,10 @@ workflows:
       xcode: latest
       cocoapods: default
       vars:
-        BUNDLE_ID: "com.metestudios.flowify"
+        BUNDLE_ID: "com.metestudios.flowifygame"
         XCODE_SCHEME: "App"
         TEAM_ID: "ERUH5NNQUB"
-        PROFILE_NAME: "AppStore_com.metestudios.flowify"
+        PROFILE_NAME: "AppStore_com.metestudios.flowifygame"
 
     scripts:
       - name: Install dependencies
