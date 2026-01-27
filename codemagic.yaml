@@ -42,55 +42,25 @@ workflows:
           cd ios/App
           pod install
 
-      - name: Fetch signing files
+      - name: Install Ruby dependencies
         script: |
-          keychain initialize
-          app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
-          keychain add-certificates
+          cd ios/App
+          bundle install
 
-      - name: Create exportOptions.plist
+      - name: Fastlane Build & Deploy
         script: |
-          cat > /Users/builder/exportOptions.plist <<EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>app-store</string>
-              <key>teamID</key>
-              <string>$TEAM_ID</string>
-              <key>signingStyle</key>
-              <string>manual</string>
-              <key>provisioningProfiles</key>
-              <dict>
-                  <key>$BUNDLE_ID</key>
-                  <string>$PROFILE_NAME</string>
-              </dict>
-          </dict>
-          </plist>
-          EOF
-          cat /Users/builder/exportOptions.plist
-
-      - name: Archive app (FORCED SIGNING)
-        script: |
-          xcodebuild archive \
-            -workspace ios/App/App.xcworkspace \
-            -scheme "$XCODE_SCHEME" \
-            -archivePath build/ios/App.xcarchive \
-            CODE_SIGN_STYLE=Manual \
-            DEVELOPMENT_TEAM="$TEAM_ID" \
-            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
-            CODE_SIGN_IDENTITY="Apple Distribution"
-
-      - name: Export IPA
-        script: |
-          xcodebuild -exportArchive \
-            -archivePath build/ios/App.xcarchive \
-            -exportOptionsPlist /Users/builder/exportOptions.plist \
-            -exportPath build/ios/ipa
+          cd ios/App
+          bundle exec fastlane beta
+        test_report: ios/App/build/reports/junit.xml
+        env:
+          # Mapping Github secrets to environment variables if needed
+          # Or ensuring they match what's in Fastfile
+          APP_STORE_CONNECT_KEY_ID: $APP_STORE_CONNECT_KEY_ID
+          APP_STORE_CONNECT_ISSUER_ID: $APP_STORE_CONNECT_ISSUER_ID
+          APP_STORE_CONNECT_KEY_CONTENT: $APP_STORE_CONNECT_KEY_CONTENT
 
     artifacts:
-      - build/ios/ipa/*.ipa
+      - ios/App/build/*.ipa
 
     publishing:
       app_store_connect:
