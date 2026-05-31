@@ -56,6 +56,9 @@ workflows:
       - name: Node.js bağımlılıklarını yükle
         script: |
           npm install
+      - name: AdMob derleme hatasını düzelt (Swift yaması)
+        script: |
+          sed -i '' 's/UMPConsentStatus/ConsentStatus/g' node_modules/@capacitor-community/admob/ios/Sources/AdMobPlugin/Consent/ConsentExecutor.swift
       - name: React uygulamasını derle
         script: |
           npm run build
