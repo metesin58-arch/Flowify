@@ -39,12 +39,12 @@ workflows:
   # 2. IOS DERLEME SÜRECİ
   # ==========================================
   ios-workflow:
-    name: iOS Derleme (Simülatör/Test)
+    name: iOS Derleme (Cihaz/Test)
     max_build_duration: 30
     instance_type: mac_mini_m1
     environment:
       node: latest
-      xcode: latest
+      xcode: 15.4
       cocoapods: default
     triggering:
       events:
@@ -67,22 +67,21 @@ workflows:
           cd ios/App
           pod repo update
           pod install
-      - name: iOS Simülatör derlemesini başlat (İmzasız)
+      - name: iOS Cihaz derlemesini başlat (İmzasız)
         script: |
           # Bu komut test amaçlı olarak imza gerektirmeden Xcode derlemesi yapar
           xcodebuild \
             -workspace ios/App/App.xcworkspace \
             -scheme App \
-            -sdk iphonesimulator \
+            -sdk iphoneos \
             -configuration Debug \
-            -arch x86_64 \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             build
     artifacts:
-      # Simülatörde çalıştırılabilen .app çıktısı
-      - ios/App/build/Debug-iphonesimulator/App.app
+      # Gerçek cihazlar için üretilen .app çıktısı
+      - ios/App/build/Debug-iphoneos/App.app
 
 # ==========================================
 # Geliştirici Gelişmiş Bilgilendirmesi:
