@@ -1,0 +1,110 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Private user data and stats",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "monthly_listeners": { "type": "number" },
+        "respect": { "type": "number" },
+        "level": { "type": "number" },
+        "followersCount": { "type": "number" },
+        "followingCount": { "type": "number" },
+        "appearance": { "type": "object" }
+      }
+    },
+    "PublicUser": {
+      "title": "PublicUser",
+      "description": "Publicly visible user profile for leaderboards and social",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "monthly_listeners": { "type": "number" },
+        "level": { "type": "number" },
+        "respect": { "type": "number" },
+        "lastActive": { "type": "string", "format": "date-time" },
+        "appearance": { "type": "object" },
+        "followersCount": { "type": "number" },
+        "followingCount": { "type": "number" }
+      }
+    },
+    "Post": {
+      "title": "Post",
+      "description": "Social media post",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "author": { "type": "string" },
+        "content": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "type": { "type": "string" },
+        "likes": { "type": "number" },
+        "comments": { "type": "number" }
+      }
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Direct message",
+      "type": "object",
+      "properties": {
+        "fromId": { "type": "string" },
+        "author": { "type": "string" },
+        "content": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "read": { "type": "boolean" }
+      }
+    },
+    "RapTrack": {
+      "title": "RapTrack",
+      "description": "AI generated rap track using Lyria",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "lyrics": { "type": "string" },
+        "audioData": { "type": "string", "description": "Base64 encoded audio or storage path" },
+        "style": { "type": "string" },
+        "quality": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["name", "lyrics", "ownerId"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/stats/current": {
+      "schema": { "$ref": "User" },
+      "description": "Private stats for a user"
+    },
+    "/users/{userId}/tracks/{trackId}": {
+      "schema": { "$ref": "RapTrack" },
+      "description": "User's created rap tracks"
+    },
+    "/public_tracks/{trackId}": {
+      "schema": { "$ref": "RapTrack" },
+      "description": "Public lobby tracks"
+    },
+    "/public_users/{userId}": {
+      "schema": { "$ref": "PublicUser" },
+      "description": "Public profile for a user"
+    },
+    "/posts/{postId}": {
+      "schema": { "$ref": "Post" },
+      "description": "Global social posts"
+    },
+    "/direct_messages/{chatId}/messages/{messageId}": {
+      "schema": { "$ref": "Message" },
+      "description": "Messages in a chat"
+    },
+    "/user_chats/{userId}/conversations/{otherId}": {
+      "schema": "object",
+      "description": "Chat summaries for a user"
+    },
+    "/freestyle_rooms/{roomId}": {
+      "schema": "object",
+      "description": "Live 1v1 multiplayer freestyle rap battle rooms with spectator voting"
+    }
+  }
+}

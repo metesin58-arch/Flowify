@@ -1,0 +1,12 @@
+
+{
+  "appId": "com.flowify.game",
+  "appName": "Flowify",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "ios": {
+    "contentInset": "always"
+  }
+}

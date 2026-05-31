@@ -1,0 +1,178 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+        ((exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
+         (request.auth.token.email == "metesin58@gmail.com" && request.auth.token.email_verified == true) ||
+         (request.auth.token.email == "metesin58@gmail.com")); // Fallback for dev
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['name']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 50 &&
+             (!('role' in data) || data.role in ['user', 'admin']);
+    }
+
+    function isValidPost(data) {
+      return data.keys().hasAll(['authorId', 'authorName', 'content', 'timestamp']) &&
+             data.authorId == request.auth.uid &&
+             data.content is string && data.content.size() > 0 && data.content.size() < 1000;
+    }
+
+    function isValidMessage(data) {
+      return data.keys().hasAll(['fromId', 'author', 'content', 'timestamp']) &&
+             data.fromId == request.auth.uid &&
+             data.content is string && data.content.size() > 0 && data.content.size() < 1000;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    // Private User Data
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data) && (request.resource.data.role == 'user' || isAdmin());
+      allow update: if (isOwner(userId) && isValidUser(request.resource.data) && (request.resource.data.role == resource.data.role || isAdmin())) || isAdmin();
+      
+      match /stats/current {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create, update: if isAuthenticated();
+      }
+      
+      match /followers/{followerId} {
+        allow read: if isAuthenticated();
+        allow write: if isAuthenticated();
+      }
+      
+      match /following/{followingId} {
+        allow read: if isAuthenticated();
+        allow write: if isAuthenticated();
+      }
+    }
+
+    // Public Profiles
+    match /public_users/{userId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated();
+    }
+
+    // Social Posts
+    match /posts/{postId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidPost(request.resource.data);
+      allow update: if isAuthenticated() && (isOwner(resource.data.uid) || isAdmin());
+      allow delete: if isAuthenticated() && (isOwner(resource.data.uid) || isAdmin());
+    }
+
+    // Global Feed
+    match /global_feed/{postId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && (isOwner(resource.data.uid) || isAdmin());
+    }
+
+    // Direct Messages
+    match /direct_messages/{chatId} {
+      allow read: if isAuthenticated() && chatId.contains(request.auth.uid);
+      
+      match /messages/{messageId} {
+        allow read: if isAuthenticated() && chatId.contains(request.auth.uid);
+        allow create: if isAuthenticated() && chatId.contains(request.auth.uid) && isValidMessage(request.resource.data);
+      }
+    }
+
+    // User Chat Summaries
+    match /user_chats/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      
+      match /conversations/{otherId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow write: if isAuthenticated() && (isOwner(userId) || isOwner(otherId) || isAdmin());
+      }
+    }
+
+    // Follows
+    match /follows/{followId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // Games
+    match /games/{gameId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      
+      match /players/{playerId} {
+        allow read: if isAuthenticated();
+        allow write: if isAuthenticated();
+      }
+      
+      match /taunts/{tauntId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated();
+        allow delete: if isAuthenticated();
+      }
+    }
+
+    // Lobbies
+    match /lobbies/{gameType}/players/{playerId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(playerId) || isAdmin();
+    }
+
+    // Invites
+    match /invites/{userId}/received/{challengerId} {
+      allow read: if isOwner(userId) || isOwner(challengerId) || isAdmin();
+      allow write: if isAuthenticated();
+    }
+
+    // Pokes
+    match /pokes/{userId}/received/{pokeId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if isAuthenticated();
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
+    // Leaderboards
+    match /leaderboards/{lbId}/scores/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId) || isAdmin();
+    }
+
+    // AI Tracks
+    match /users/{userId}/tracks/{trackId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId) || isAdmin();
+    }
+
+    match /public_tracks/{trackId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin();
+    }
+
+    match /freestyle_rooms/{roomId} {
+      allow read, write: if isAuthenticated();
+      
+      match /{allPaths=**} {
+        allow read, write: if isAuthenticated();
+      }
+    }
+  }
+}

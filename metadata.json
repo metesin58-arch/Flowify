@@ -1,0 +1,6 @@
+{
+  "name": "KONSERESKI",
+  "description": "Rise from the underground to the charts. The ultimate rap career simulator.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

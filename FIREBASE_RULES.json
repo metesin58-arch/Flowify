@@ -1,0 +1,32 @@
+
+{
+  "rules": {
+    ".read": true,
+    ".write": true,
+    "public_users": {
+      ".indexOn": ["respect", "monthly_listeners"]
+    },
+    "games": {
+      ".indexOn": ["status"]
+    },
+    "leaderboards": {
+      "rapquiz": {
+        ".indexOn": ["score"]
+      }
+    },
+    "direct_messages": {
+      "$chatId": {
+        ".read": "auth != null && $chatId.contains(auth.uid)",
+        ".write": "auth != null && $chatId.contains(auth.uid)"
+      }
+    },
+    "user_chats": {
+      "$userId": {
+        ".read": "auth != null && auth.uid == $userId",
+        "$otherId": {
+          ".write": "auth != null && (auth.uid == $userId || auth.uid == $otherId)"
+        }
+      }
+    }
+  }
+}
