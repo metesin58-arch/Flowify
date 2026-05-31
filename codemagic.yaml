@@ -65,6 +65,7 @@ workflows:
       - name: CocoaPods bağımlılıklarını kur (iOS)
         script: |
           cd ios/App
+          pod repo update
           pod install
       - name: iOS Simülatör derlemesini başlat (İmzasız)
         script: |
