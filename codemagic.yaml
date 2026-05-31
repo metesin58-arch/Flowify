@@ -74,13 +74,14 @@ workflows:
             -scheme App \
             -sdk iphonesimulator \
             -configuration Debug \
+            -arch x86_64 \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             build
     artifacts:
       # Simülatörde çalıştırılabilen .app çıktısı
-      - ios/App/build/Release-iphonesimulator/App.app
+      - ios/App/build/Debug-iphonesimulator/App.app
 
 # ==========================================
 # Geliştirici Gelişmiş Bilgilendirmesi:
