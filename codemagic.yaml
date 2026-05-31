@@ -44,7 +44,7 @@ workflows:
     instance_type: mac_mini_m1
     environment:
       node: latest
-      xcode: 15.4
+      xcode: latest
       cocoapods: default
     triggering:
       events:
