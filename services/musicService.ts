@@ -1,7 +1,8 @@
 
 import { SongTrack, GameSequence, TriviaQuestion } from '../types';
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || '';
+// Primary: Express Proxy API (Avoids CORS/Mixed Content on Production)
+const PROXY_API_URL = '/api/music';
 
 // --- HELPERS ---
 
@@ -9,23 +10,16 @@ const shuffle = <T>(array: T[]): T[] => {
     return [...array].sort(() => Math.random() - 0.5);
 };
 
-// --- CORE FETCHER ---
+// --- CORE FETCHER (PROXY) ---
 const fetchFromProxy = async (term: string, limit: number = 25): Promise<SongTrack[]> => {
     // Validation
     if (!term || term.trim() === '') return [];
 
     let rawData: any = null;
-    let url = '';
 
-    if (BACKEND_URL) {
-        url = `${BACKEND_URL}/api/music?term=${encodeURIComponent(term)}&limit=${limit}`;
-    } else {
-        // Direct call to Apple's iTunes Search API (Standalone Client-side Mode)
-        url = `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=music&entity=song&limit=${limit}&country=TR&lang=tr_tr`;
-    }
-
-    // 1. Attempt Fetch
+    // 1. Attempt Proxy Fetch
     try {
+        const url = `${PROXY_API_URL}?term=${encodeURIComponent(term)}&limit=${limit}`;
         const response = await fetch(url);
 
         if (response.ok) {

@@ -116,12 +116,7 @@ export const DissGame: React.FC<Props> = ({ player, updateMultipleStats, onExit 
 
         // Fetch and play music once (no loop)
         try {
-            const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || '';
-            const musicUrl = BACKEND_URL 
-                ? `${BACKEND_URL}/api/music?term=${encodeURIComponent(opp.name)}&limit=5` 
-                : `https://itunes.apple.com/search?term=${encodeURIComponent(opp.name)}&media=music&entity=song&limit=5&country=TR&lang=tr_tr`;
-            
-            const res = await fetch(musicUrl);
+            const res = await fetch(`/api/music?term=${encodeURIComponent(opp.name)}&limit=5`);
             const data = await res.json();
             if (data.results && data.results.length > 0) {
                 const randomSong = data.results[Math.floor(Math.random() * data.results.length)];

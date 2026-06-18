@@ -467,75 +467,22 @@ export const Studio: React.FC<Props> = ({ player, updateStat, spendEnergy, onClo
 
     try {
       const selectedTheme = selectedThemeIdx !== null ? SPEC_THEMES[selectedThemeIdx].title : "Sokak Çetesi";
-      const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || '';
-      const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+      
+      const response = await fetch("/api/gemini/generate-interactive-track", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: storyPrompt,
+          theme: selectedTheme,
+          playerName: player.name
+        })
+      });
 
-      let data: any = null;
-
-      if (BACKEND_URL) {
-        const response = await fetch(`${BACKEND_URL}/api/gemini/generate-interactive-track`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            prompt: storyPrompt,
-            theme: selectedTheme,
-            playerName: player.name
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error("API isteği başarısız oldu");
-        }
-
-        data = await response.json();
-      } else {
-        // Direct call in Standalone Mode
-        if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE") {
-          throw new Error("Yapay zeka stüdyosu için Gemini API Anahtarı bulunamadı. Lütfen .env dosyasını kontrol edin.");
-        }
-
-        const systemInstruction = `Sen profesyonel bir Türk rap prodüktörü ve lirik yazarı (Ghostwriter) yapay zekasın. Oyuncu için tamamen özgün, sanatsal kalitesi çok yüksek, kafiyeleri sağlam, Türkçe sokak/drill/trap jargonu içeren rap şarkı sözleri ve bu şarkıya özel ritim/synthesizer/drum sequencer parametrelerini üretebilirsin.
-        
-Sana verilen şarkı konusuna ve tarz temasına bağlı kalarak, oyuncunun takma adını şarkı sözlerinde zekice geçir.
-Sözlerde [Intro] (Giriş), [Chorus] (Koro), [Verse 1], [Verse 2] ve [Outro] (Çıkış) bölümleri olsun.
-
-Kesinlikle sadece geçerli bir JSON objesi geriye dönmelisin. Ekstra açıklama veya markdown kesmeleri (\`\`\`json) ekleme. JSON yapısı tam olarak şu şekilde olmalıdır:
-{
-  "lyrics": "Ürettiğin rap şarkı sözleri. Bölümler arasına \\n satır satır boşluklar koy.",
-  "preset": {
-    "bpm": 120,
-    "bassStyle": "heavy-drill",
-    "chordProgression": [57, 53, 52, 55],
-    "hihatStyle": "trap-rolls",
-    "melodySpeed": 1
-  }
-}`;
-
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-        const promptText = `Lütfen şu detaylara sahip Türkçe Rap parçasını oluştur: Konu: ${storyPrompt || 'Sokaklar'}, Tarz Teması: ${selectedTheme || 'Sokak Çetesi'}, Sanatçı Adı: ${player.name || 'Rapçi'}. Çıktı sadece saf JSON formatında olmalıdır.`;
-
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: promptText }] }],
-            systemInstruction: {
-              parts: [{ text: systemInstruction }]
-            },
-            generationConfig: {
-              responseMimeType: "application/json"
-            }
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error(`Direct call failed with status: ${response.status}`);
-        }
-
-        const resData = await response.json();
-        const jsonText = resData.candidates?.[0]?.content?.parts?.[0]?.text || "";
-        data = JSON.parse(jsonText);
+      if (!response.ok) {
+        throw new Error("API isteği başarısız oldu");
       }
+
+      const data = await response.json();
       
       if (data && data.lyrics) {
         setLyricsText(data.lyrics);

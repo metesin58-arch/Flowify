@@ -68,21 +68,16 @@ export const Dashboard: React.FC<Props> = ({
     (window.matchMedia('(max-width: 768px)').matches || 'ontouchstart' in window);
 
   const handleConnectSpotify = async () => {
-    const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || '';
-    if (!BACKEND_URL) {
-      alert("Spotify entegrasyonu için uzak sunucu (backend) kurulmuş olmalıdır. Şu an sunucusuz (standalone) moddasınız.");
-      return;
-    }
     try {
-      const response = await fetch(`${BACKEND_URL}/api/auth/spotify/url`);
+      const response = await fetch("/api/auth/spotify/url");
       if (!response.ok) throw new Error("Failed to get auth URL");
       const { url } = await response.json();
- 
+
       const width = 600;
       const height = 700;
       const left = window.screenX + (window.outerWidth - width) / 2;
       const top = window.screenY + (window.outerHeight - height) / 2;
- 
+
       window.open(
         url,
         "spotify_auth",
@@ -92,12 +87,12 @@ export const Dashboard: React.FC<Props> = ({
       console.error("Spotify connection error:", error);
     }
   };
- 
+
   const isVerified =
     ownedUpgrades &&
     ownedUpgrades["verified_badge"] &&
     ownedUpgrades["verified_badge"] > 0;
- 
+
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (
@@ -110,17 +105,15 @@ export const Dashboard: React.FC<Props> = ({
         fetchPlaylists(token);
       }
     };
- 
+
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
   }, []);
- 
+
   const fetchPlaylists = async (token: string) => {
-    const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || '';
-    if (!BACKEND_URL) return;
     setIsLoadingPlaylists(true);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/spotify/playlists`, {
+      const response = await fetch("/api/spotify/playlists", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
