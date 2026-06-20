@@ -21,6 +21,7 @@ content = content.replace(/UMPConsentInformation/g, 'ConsentInformation');
 content = content.replace(/sharedInstance/g, 'shared');
 content = content.replace(/UMPFormStatus/g, 'FormStatus');
 content = content.replace(/UMPConsentForm/g, 'ConsentForm');
+content = content.replace(/ConsentForm\.load\(completionHandler:/g, 'ConsentForm.load(with:');
 content = content.replace(/UMPConsentStatus/g, 'ConsentStatus');
 
 fs.writeFileSync(targetFile, content, 'utf8');
