@@ -126,7 +126,15 @@ workflows:
         script: |
           keychain initialize
           echo "$CM_CERTIFICATE_PRIVATE_KEY" > /tmp/cert_key
+          echo "Key file size: $(wc -c < /tmp/cert_key) bytes"
+          echo "Key file lines: $(wc -l < /tmp/cert_key)"
+          head -n 1 /tmp/cert_key
+          tail -n 1 /tmp/cert_key
           tr -d '\r' < /tmp/cert_key > /tmp/cert_key_clean
+          echo "Clean key size: $(wc -c < /tmp/cert_key_clean) bytes"
+          echo "Clean key lines: $(wc -l < /tmp/cert_key_clean)"
+          head -n 1 /tmp/cert_key_clean
+          tail -n 1 /tmp/cert_key_clean
           app-store-connect fetch-signing-files "com.flowify.game" \
             --type IOS_APP_STORE \
             --create \
