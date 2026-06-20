@@ -149,5 +149,6 @@ workflows:
       email:
         recipients:
           - metesin58@gmail.com
-        on_failure: notify
-        on_success: notify
+        notify:
+          success: true
+          failure: true
