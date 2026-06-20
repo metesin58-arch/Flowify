@@ -89,13 +89,11 @@ workflows:
     name: iOS Device Build (Signed IPA)
     max_build_duration: 60
     instance_type: mac_mini_m2
-    
-    # Active connection to Apple Developer Portal using Codemagic Integration
-    integrations:
-      app_store_connect: Flowify2026 # Must match the Developer Portal integration name in Codemagic UI
 
     environment:
-      # Disabled ios_signing pre-validation block to allow dynamic profile creation via CLI
+      # Inject App Store Connect credentials from Codemagic Environment Variables Group
+      groups:
+        - app_store_credentials
       vars:
         XCODE_WORKSPACE: "ios/App/App.xcworkspace"
         XCODE_SCHEME: "App"
@@ -127,7 +125,12 @@ workflows:
       - name: Set up code signing
         script: |
           keychain initialize
-          app-store-connect fetch-signing-files "com.flowify.game" --type IOS_APP_STORE --create
+          app-store-connect fetch-signing-files "com.flowify.game" \
+            --type IOS_APP_STORE \
+            --create \
+            --api-key "$APP_STORE_CONNECT_PRIVATE_KEY" \
+            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
+            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID"
           keychain add-certificates
           xcode-project use-profiles
       - name: Build iOS IPA
@@ -140,9 +143,11 @@ workflows:
       - /tmp/xcodebuild_logs/*.log
       
     publishing:
-      # Automatically uploads the successfully built and signed IPA to TestFlight
+      # Automatically uploads the successfully built and signed IPA to TestFlight using environment variables
       app_store_connect:
-        auth: integration
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         submit_to_testflight: true
       email:
         recipients:
