@@ -9,11 +9,10 @@ import { BattleBetGame } from './games/BattleBetGame';
 import { BlackjackGame } from './games/BlackjackGame';
 import { ZeppelinGame } from './games/ZeppelinGame';
 import { DissGame } from './games/DissGame';
-import { CITIES, ECONOMY, HEAD_OPTIONS, CLOTHING_STYLES, HAT_STYLES, CHAIN_STYLES } from '../constants';
+import { CITIES, ECONOMY, HEAD_OPTIONS, CLOTHING_STYLES, HAT_STYLES, CHAIN_STYLES, getAdjustedCities } from '../constants';
 import { motion, AnimatePresence } from 'motion/react';
 
 // New Features
-import { Studio } from './Studio';
 import { ManagerAgency } from './CityFeatures';
 import { TourMap } from './TourMap';
 import { IAPStore, IAPTab } from './IAPStore';
@@ -85,7 +84,7 @@ export const CareerHub: React.FC<Props> = ({ player, onStartSetup, onExit, updat
   const [showActivities, setShowActivities] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   
-  const [activeModal, setActiveModal] = useState<'none' | 'map' | 'market' | 'studio' | 'agency' | 'minder'>('none');
+  const [activeModal, setActiveModal] = useState<'none' | 'map' | 'market' | 'agency' | 'minder'>('none');
 
   const handleVehicleBuy = (vehicleId: string, cost: number) => {
     const carModels = [
@@ -276,7 +275,8 @@ export const CareerHub: React.FC<Props> = ({ player, onStartSetup, onExit, updat
       );
   }
 
-  const currentCityConfig = CITIES[player.currentCity || 'eskisehir'];
+  const citiesConfig = getAdjustedCities(player.startingCity);
+  const currentCityConfig = citiesConfig[player.currentCity || 'eskisehir'];
 
   return (
     <div className="h-full bg-black flex flex-col relative overflow-hidden font-sans text-white animate-fade-in select-none">
@@ -320,11 +320,6 @@ export const CareerHub: React.FC<Props> = ({ player, onStartSetup, onExit, updat
 
         {showTutorial && <CareerTutorial onClose={closeTutorial} />}
         
-        {activeModal === 'studio' && (
-            <div className="fixed inset-0 z-[200] animate-in fade-in slide-in-from-bottom-5">
-                <Studio player={player} updateStat={updateStat} spendEnergy={(amt) => { if(player.energy >= amt) { updateStat('energy', -amt); return true; } return false; }} onClose={() => setActiveModal('none')} />
-            </div>
-        )}
         {activeModal === 'agency' && (
             <div className="fixed inset-0 z-[200] animate-in fade-in slide-in-from-bottom-5">
                 <ManagerAgency player={player} onClose={() => setActiveModal('none')} updateStat={updateStat} onManagerHire={handleManagerHire} onCityUnlock={handleCityUnlock} onOpenShop={handleOpenShopSafe} />
@@ -464,11 +459,12 @@ export const CareerHub: React.FC<Props> = ({ player, onStartSetup, onExit, updat
                             />
  
                             <CareerCard 
-                                title="stüdyo"
-                                subtitle="lirik & analog mikser"
+                                shadow={true}
+                                title="harita"
+                                subtitle="turne & rota seçimi"
                                 accentColor="#1DB954"
-                                icon={<MicIcon />}
-                                onClick={() => { playClickSound(); setActiveModal('studio'); }}
+                                icon={<GlobeIcon />}
+                                onClick={() => { playClickSound(); setActiveModal('map'); }}
                             />
  
                             <CareerCard 

@@ -1,6 +1,6 @@
 
 import { PlayerStats, CharacterAppearance, CityKey } from '../types';
-import { CITIES, ECONOMY } from '../constants';
+import { CITIES, ECONOMY, getAdjustedCities } from '../constants';
 
 export const calculateUpgradeCost = (baseCost: number, multiplier: number, owned: number): number => {
   return Math.floor(baseCost * Math.pow(multiplier, owned));
@@ -122,7 +122,8 @@ export const calculateConcertRevenue = (performanceScore: number, cityId: CityKe
 };
 
 export const canUnlockCity = (cityId: CityKey, player: PlayerStats): boolean => {
-    const city = CITIES[cityId];
+    const citiesConfig = getAdjustedCities(player.startingCity);
+    const city = citiesConfig[cityId];
     if (!city) return false;
     return city.unlockRequirements.check(player);
 };

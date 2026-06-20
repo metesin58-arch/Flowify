@@ -100,6 +100,57 @@ export const CITIES: Record<CityKey, CityConfig> = {
   }
 };
 
+export const getAdjustedCities = (startingCity?: CityKey): Record<CityKey, CityConfig> => {
+    if (!startingCity || startingCity === 'eskisehir') {
+        return CITIES;
+    }
+
+    const result = {} as Record<CityKey, CityConfig>;
+    const keys = Object.keys(CITIES) as CityKey[];
+    
+    for (const key of keys) {
+        result[key] = { 
+            ...CITIES[key],
+            unlockRequirements: { ...CITIES[key].unlockRequirements }
+        };
+    }
+
+    const targetCity = startingCity;
+    const baseCity = 'eskisehir' as CityKey;
+
+    const targetTemplate = CITIES[targetCity];
+    const baseTemplate = CITIES[baseCity];
+
+    // Swapping metrics:
+    // Selected starting city becomes the new starter (Tier 1 metrics)
+    result[targetCity] = {
+        ...result[targetCity],
+        tier: baseTemplate.tier,
+        basePay: baseTemplate.basePay,
+        multiplier: baseTemplate.multiplier,
+        weeklyCost: baseTemplate.weeklyCost,
+        unlockRequirements: {
+            description: 'başlangıç bölgesi.',
+            check: () => true
+        }
+    };
+
+    // Eskişehir becomes the advanced city, inheriting selected city's requirements and multipliers
+    result[baseCity] = {
+        ...result[baseCity],
+        tier: targetTemplate.tier,
+        basePay: targetTemplate.basePay,
+        multiplier: targetTemplate.multiplier,
+        weeklyCost: targetTemplate.weeklyCost,
+        unlockRequirements: {
+            description: targetTemplate.unlockRequirements.description,
+            check: targetTemplate.unlockRequirements.check
+        }
+    };
+
+    return result;
+};
+
 export const INITIAL_STATS: PlayerStats = {
   name: '', 
   energy: 100, // Max Start

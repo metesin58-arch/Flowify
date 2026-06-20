@@ -714,7 +714,7 @@ const GameContent: React.FC = () => {
                   </>
               )}
           </div>
-          {!hideGlobalHeader && !activeIAPTab && viewMode !== 'career' && <Navigation activeTab={activeTab} setTab={handleTabChange} />}
+          {!hideGlobalHeader && !activeIAPTab && viewMode !== 'career' && <Navigation activeTab={activeTab} setTab={handleTabChange} player={player} />}
       </div>
 
       {activeIAPTab && <IAPStore player={player} updateMultipleStats={updateMultipleStats} onClose={() => setActiveIAPTab(null)} initialTab={activeIAPTab} />}

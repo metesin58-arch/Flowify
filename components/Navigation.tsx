@@ -1,16 +1,18 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { TabType } from '../types';
+import { TabType, PlayerStats } from '../types';
 import { HomeIcon, UsersIcon, DollarIcon, GameControllerIcon, GlobeIcon } from './Icons';
+import { Avatar } from './Avatar';
 import { playClickSound } from '../services/sfx';
 
 interface Props {
   activeTab: TabType;
   setTab: (t: TabType) => void;
+  player?: PlayerStats | null;
 }
 
-export const Navigation: React.FC<Props> = ({ activeTab, setTab }) => {
+export const Navigation: React.FC<Props> = ({ activeTab, setTab, player }) => {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = React.useState(false);
   
@@ -21,6 +23,34 @@ export const Navigation: React.FC<Props> = ({ activeTab, setTab }) => {
       { id: 'nightlife', label: 'Casino', Icon: DollarIcon }, 
       { id: 'social', label: 'Sosyal', Icon: UsersIcon } 
   ];
+
+  const tabColors: Record<string, { bgGlow: string; borderGlow: string; activeColor: string }> = {
+    hub: {
+      bgGlow: 'rgba(250, 204, 21, 0.12)',
+      borderGlow: 'rgba(250, 204, 21, 0.3)',
+      activeColor: '#FACC15' // Profile yellow
+    },
+    arcade: {
+      bgGlow: 'rgba(168, 85, 247, 0.12)',
+      borderGlow: 'rgba(168, 85, 247, 0.3)',
+      activeColor: '#A855F7' // Arcade purple
+    },
+    online: {
+      bgGlow: 'rgba(59, 130, 246, 0.12)',
+      borderGlow: 'rgba(59, 130, 246, 0.3)',
+      activeColor: '#3B82F6' // Arena blue
+    },
+    nightlife: {
+      bgGlow: 'rgba(29, 185, 84, 0.12)',
+      borderGlow: 'rgba(29, 185, 84, 0.3)',
+      activeColor: '#1DB954' // Casino green
+    },
+    social: {
+      bgGlow: 'rgba(244, 63, 94, 0.12)',
+      borderGlow: 'rgba(244, 63, 94, 0.3)',
+      activeColor: '#F43F5E' // Social pink/rose
+    }
+  };
 
   const handleTabClick = (id: TabType) => {
       playClickSound();
@@ -98,6 +128,9 @@ export const Navigation: React.FC<Props> = ({ activeTab, setTab }) => {
         >
             {navItems.map((tab) => {
                 const isActive = activeTab === tab.id;
+                const colors = tabColors[tab.id] || tabColors.hub;
+                const isSocialAndHasAvatar = tab.id === 'social' && player?.appearance;
+
                 return (
                     <button
                         key={tab.id}
@@ -108,11 +141,12 @@ export const Navigation: React.FC<Props> = ({ activeTab, setTab }) => {
                         {isActive && (
                             <motion.div 
                                 layoutId="nav-active-bubble"
-                                className={`absolute inset-y-1 inset-x-1 rounded-2xl z-0 transition-colors duration-200 ${
-                                    isDragging 
-                                    ? 'bg-[#1ed760]/12 border border-[#1ed760]/30 shadow-[0_0_15px_rgba(30,215,96,0.2)]' 
-                                    : 'bg-white/[0.08] border border-white/[0.06] shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_8px_20px_rgba(0,0,0,0.4)]'
-                                }`}
+                                style={{
+                                    backgroundColor: colors.bgGlow,
+                                    borderColor: colors.borderGlow,
+                                    boxShadow: `0 0 15px ${colors.bgGlow}, inset 0 1px 1px rgba(255,255,255,0.06)`
+                                }}
+                                className="absolute inset-y-1 inset-x-1 rounded-2xl z-0 border"
                                 transition={{ type: "spring", stiffness: 380, damping: 28 }}
                             />
                         )}
@@ -120,14 +154,37 @@ export const Navigation: React.FC<Props> = ({ activeTab, setTab }) => {
                         <motion.div 
                             animate={{
                                 scale: isActive ? (isDragging ? 1.08 : 1.03) : 1,
-                                color: isActive ? '#FFFFFF' : '#8a8a8a'
                             }}
                             className="relative z-10 flex flex-col items-center gap-0.5"
                         >
-                            <tab.Icon className={`w-5.5 h-5.5 transition-all duration-300 ${isActive ? (isDragging ? 'text-[#1ed760]' : 'text-white') : 'text-neutral-500'}`} />
-                            <span className={`text-[9px] font-bold tracking-tight transition-all duration-300 lowercase ${
-                                isActive ? (isDragging ? 'text-[#1ed760]' : 'text-white') : 'text-neutral-500'
-                            }`}>
+                            {isSocialAndHasAvatar ? (
+                                <div 
+                                    className="w-6 h-6 rounded-full overflow-hidden border flex items-center justify-center bg-neutral-900/50 transition-all duration-300 relative"
+                                    style={{ 
+                                        borderColor: isActive ? colors.activeColor : 'rgba(255, 255, 255, 0.2)', 
+                                        boxShadow: isActive ? `0 0 10px ${colors.bgGlow}` : 'none' 
+                                    }}
+                                >
+                                    <div className="scale-[2.4] translate-y-[4.5px] pointer-events-none select-none">
+                                        <Avatar 
+                                            appearance={player.appearance} 
+                                            gender={player.gender} 
+                                            size={24} 
+                                            headOnly={true} 
+                                            className="pointer-events-none select-none"
+                                        />
+                                    </div>
+                                </div>
+                            ) : (
+                                <tab.Icon 
+                                    className="w-5.2 h-5.2 transition-all duration-300" 
+                                    style={{ color: isActive ? colors.activeColor : '#6b7280' }}
+                                />
+                            )}
+                            <span 
+                                className="text-[9px] font-bold tracking-tight transition-all duration-300 lowercase"
+                                style={{ color: isActive ? colors.activeColor : '#6b7280' }}
+                            >
                                 {tab.label}
                             </span>
                         </motion.div>

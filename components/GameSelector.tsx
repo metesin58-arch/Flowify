@@ -48,16 +48,6 @@ export const GameSelector: React.FC<Props> = ({ player, onSelectMode }) => {
   return (
     <div className="h-full w-full bg-black flex flex-col relative overflow-hidden font-sans select-none max-h-[100dvh]">
       
-      {/* MINIMAL DEVELOPER BUTTON */}
-      <div className="absolute top-3 right-3 z-[60] flex items-center">
-        <button 
-          onClick={() => handleSelect('test_area')}
-          className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 active:scale-95 transition-all text-white/30 hover:text-white/60 select-none text-[7px] tracking-widest font-black uppercase"
-        >
-          🛠 DEV_ROOM
-        </button>
-      </div>
-
       {/* SPLIT PANELS WRAPPER */}
       <div className="flex-1 flex flex-col h-full w-full bg-black overflow-hidden relative">
         

@@ -44,6 +44,17 @@ export const CharacterCreation: React.FC<Props> = ({ onCreate, isEditing = false
   const [searchResults, setSearchResults] = useState<SongTrack[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
+  const suggestName = () => {
+    playClickSound();
+    const prefixes = ["Lil", "Mc", "Dj", "Aura", "Trap", "Ritim", "Lirik", "Sokak", "Karanlik", "Ghetto", "Micro", "Flow", "Hyper", "Siber", "Sago", "Cezo"];
+    const suffixes = ["Flow", "Sair", "Kral", "Ustasi", "Vibe", "Makinesi", "Deha", "Spit", "Boy", "G", "Cezmi", "Hejan", "Rapci", "Sovalye", "Lord"];
+    const randomPrefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+    const randomSuffix = suffixes[Math.floor(Math.random() * suffixes.length)];
+    const randNum = Math.floor(Math.random() * 99);
+    const suggested = `${randomPrefix}_${randomSuffix}${randNum > 50 ? randNum : ''}`.toLowerCase();
+    setName(suggested);
+  };
+
   // --- LOCK LOGIC ---
   const isHeadLocked = (index: number) => {
       if (index < 2) return false;
@@ -224,13 +235,23 @@ export const CharacterCreation: React.FC<Props> = ({ onCreate, isEditing = false
                   <div className="w-full space-y-4">
                       <div className="space-y-1.5">
                           <label className="text-[10px] text-neutral-500 font-black uppercase tracking-wider px-1">sahne adı</label>
-                          <input
-                              type="text"
-                              value={name}
-                              onChange={(e) => setName(e.target.value)}
-                              className="w-full bg-[#080808]/80 border border-white/5 rounded-2xl px-4 py-4 text-white text-center text-sm font-bold placeholder-neutral-600 focus:border-[#1DB954]/40 outline-none transition-all duration-300 lowercase shadow-inner"
-                              placeholder="örn: hiphop_ustasi"
-                          />
+                          <div className="flex gap-2">
+                              <input
+                                  type="text"
+                                  value={name}
+                                  onChange={(e) => setName(e.target.value)}
+                                  className="flex-1 bg-white border-2 border-[#1DB954] rounded-2xl px-4 py-4 text-black text-center text-sm font-black placeholder-neutral-400 focus:ring-4 focus:ring-[#1DB954]/20 outline-none transition-all duration-300 lowercase shadow-[0_0_20px_rgba(255,255,255,0.7)]"
+                                  placeholder="örn: hiphop_ustasi"
+                              />
+                              <button
+                                  type="button"
+                                  onClick={suggestName}
+                                  className="bg-white hover:bg-neutral-100 text-black border-2 border-[#1DB954] font-black px-4 rounded-2xl text-xs lowercase active:scale-95 transition-all flex items-center gap-1.5 shrink-0 shadow-lg shadow-black/10"
+                              >
+                                  <SparklesIcon className="w-3.5 h-3.5 text-[#1DB954]" />
+                                  öner
+                              </button>
+                          </div>
                       </div>
 
                       <div className="space-y-1.5">

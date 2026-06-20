@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { PlayerStats, CityKey } from '../types';
-import { CITIES } from '../constants';
+import { CITIES, getAdjustedCities } from '../constants';
 import { playClickSound, playErrorSound, playWinSound } from '../services/sfx';
 import { canUnlockCity } from '../services/gameLogic';
 import { LockIcon, GlobeIcon } from './Icons';
@@ -32,6 +32,7 @@ const CONNECTIONS = [
 ];
 
 export const TourMap: React.FC<Props> = ({ player, onSelectCity, onClose }) => {
+  const citiesConfig = getAdjustedCities(player.startingCity);
   const [selectedPreview, setSelectedPreview] = useState<CityKey | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   
@@ -189,7 +190,7 @@ export const TourMap: React.FC<Props> = ({ player, onSelectCity, onClose }) => {
                     const isUnlocked = player.unlockedCities.includes(cityId);
                     const isSelected = selectedPreview === cityId;
                     const isCurrent = player.currentCity === cityId;
-                    const cityConfig = CITIES[cityId];
+                    const cityConfig = citiesConfig[cityId];
 
                     return (
                         <motion.div 
@@ -289,7 +290,7 @@ export const TourMap: React.FC<Props> = ({ player, onSelectCity, onClose }) => {
             className={`fixed bottom-6 left-4 right-4 z-[250] bg-black/90 backdrop-blur-2xl border border-white/10 p-4 rounded-[2rem] transition-all duration-500 ease-[cubic-bezier(0.19,1,0.22,1)] shadow-[0_20px_50px_rgba(0,0,0,0.85)] max-w-sm mx-auto ${selectedPreview ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-32 scale-95 opacity-0 pointer-events-none'}`}
         >
             {selectedPreview && (() => {
-                const config = CITIES[selectedPreview];
+                const config = citiesConfig[selectedPreview];
                 const isUnlocked = player.unlockedCities.includes(selectedPreview);
                 const canUnlock = !isUnlocked && canUnlockCity(selectedPreview, player);
                 const isCurrent = player.currentCity === selectedPreview;
