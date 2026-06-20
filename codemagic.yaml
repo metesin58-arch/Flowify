@@ -83,23 +83,20 @@ workflows:
       - ios/App/build/Debug-iphonesimulator/App.app
 
   # ==========================================
-  # 3. IOS DEVICE WORKFLOW (SIGNED IPA)
+  # 3. IOS DEVICE WORKFLOW (SIGNED IPA FOR TESTFLIGHT)
   # ==========================================
   ios-device-workflow:
     name: iOS Device Build (Signed IPA)
     max_build_duration: 60
     instance_type: mac_mini_m2
     
-    # To use automatic signing, configure your App Store Connect API Key integration in Codemagic UI:
-    # 1. Team Settings > Developer Portal.
-    # 2. Add Issuer ID, Key ID, and private key .p8 file.
-    # 3. Reference the integration name below (usually 'codemagic' or your custom name) and uncomment these lines.
-    # integrations:
-    #   app_store_connect: codemagic
+    # Active connection to Apple Developer Portal using Codemagic Integration
+    integrations:
+      app_store_connect: codemagic # Must match the Developer Portal integration name in Codemagic UI
 
     environment:
       ios_signing:
-        distribution_type: app_store # Options: app_store, ad_hoc, development, enterprise
+        distribution_type: app_store # Prepares the build for App Store / TestFlight distribution
         bundle_identifier: com.flowify.game
       vars:
         XCODE_WORKSPACE: "ios/App/App.xcworkspace"
@@ -131,12 +128,10 @@ workflows:
           cd ios/App && pod install
       - name: Set up code signing
         script: |
-          # Uncomment these lines if you have enabled Developer Portal integration above
-          # keychain initialize
-          # app-store-connect fetch-signing-files "com.flowify.game" --type IOS_APP_STORE --create
-          # keychain add-certificates
-          # xcode-project use-profiles
-          echo "Setting up code signing..."
+          keychain initialize
+          app-store-connect fetch-signing-files "com.flowify.game" --type IOS_APP_STORE --create
+          keychain add-certificates
+          xcode-project use-profiles
       - name: Build iOS IPA
         script: |
           xcode-project build-ipa \
@@ -145,3 +140,14 @@ workflows:
     artifacts:
       - ios/App/build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
+      
+    publishing:
+      # Automatically uploads the successfully built and signed IPA to TestFlight
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+      email:
+        recipients:
+          - metesin58@gmail.com
+        on_failure: notify
+        on_success: notify
