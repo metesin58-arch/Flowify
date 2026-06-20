@@ -126,16 +126,15 @@ workflows:
         script: |
           keychain initialize
           echo "$CM_CERTIFICATE_PRIVATE_KEY" > /tmp/cert_key
+          echo "MD5 hash of CM_CERTIFICATE_PRIVATE_KEY:"
+          echo -n "$CM_CERTIFICATE_PRIVATE_KEY" | md5sum
+          echo "First 30 characters: $(echo -n "$CM_CERTIFICATE_PRIVATE_KEY" | head -n 1 | cut -c 1-30)..."
           tr -d '\r' < /tmp/cert_key > /tmp/cert_key_clean
-          openssl rsa -in /tmp/cert_key_clean -out /tmp/cert_key_rsa
-          echo "RSA Key file size: $(wc -c < /tmp/cert_key_rsa) bytes"
-          head -n 1 /tmp/cert_key_rsa
-          tail -n 1 /tmp/cert_key_rsa
           app-store-connect fetch-signing-files "com.flowify.game" \
             --type IOS_APP_STORE \
             --create \
-            --certificate-key=@file:/tmp/cert_key_rsa
-          rm -f /tmp/cert_key /tmp/cert_key_clean /tmp/cert_key_rsa
+            --certificate-key=@file:/tmp/cert_key_clean
+          rm -f /tmp/cert_key /tmp/cert_key_clean
           keychain add-certificates
           xcode-project use-profiles
       - name: Build iOS IPA
