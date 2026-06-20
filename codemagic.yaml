@@ -127,10 +127,7 @@ workflows:
           keychain initialize
           app-store-connect fetch-signing-files "com.flowify.game" \
             --type IOS_APP_STORE \
-            --create \
-            --api-key "$APP_STORE_CONNECT_PRIVATE_KEY" \
-            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
-            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID"
+            --create
           keychain add-certificates
           xcode-project use-profiles
       - name: Build iOS IPA
