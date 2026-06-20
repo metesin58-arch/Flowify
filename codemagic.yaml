@@ -122,16 +122,16 @@ workflows:
       - name: Install CocoaPods dependencies
         script: |
           cd ios/App && pod install
-      - name: Print env names for debugging
-        script: |
-          env | cut -d= -f1 | sort
       - name: Set up code signing
         script: |
           keychain initialize
+          echo "$CM_CERTIFICATE_PRIVATE_KEY" > /tmp/cert_key
+          tr -d '\r' < /tmp/cert_key > /tmp/cert_key_clean
           app-store-connect fetch-signing-files "com.flowify.game" \
             --type IOS_APP_STORE \
             --create \
-            --certificate-key=@env:CM_CERTIFICATE_PRIVATE_KEY
+            --certificate-key=@file:/tmp/cert_key_clean
+          rm -f /tmp/cert_key /tmp/cert_key_clean
           keychain add-certificates
           xcode-project use-profiles
       - name: Build iOS IPA
