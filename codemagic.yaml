@@ -122,6 +122,9 @@ workflows:
       - name: Install CocoaPods dependencies
         script: |
           cd ios/App && pod install
+      - name: Print env names for debugging
+        script: |
+          env | cut -d= -f1 | sort
       - name: Set up code signing
         script: |
           keychain initialize
