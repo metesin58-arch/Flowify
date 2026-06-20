@@ -93,7 +93,7 @@ workflows:
     environment:
       # Inject App Store Connect credentials from Codemagic Environment Variables Group
       groups:
-        - app_store_credentials
+        - FlowifyGame
       vars:
         XCODE_WORKSPACE: "ios/App/App.xcworkspace"
         XCODE_SCHEME: "App"
