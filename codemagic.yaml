@@ -92,7 +92,7 @@ workflows:
     
     # Active connection to Apple Developer Portal using Codemagic Integration
     integrations:
-      app_store_connect: Flowitfy2026 # Must match the Developer Portal integration name in Codemagic UI
+      app_store_connect: Flowify2026 # Must match the Developer Portal integration name in Codemagic UI
 
     environment:
       # Disabled ios_signing pre-validation block to allow dynamic profile creation via CLI
