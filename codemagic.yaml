@@ -136,6 +136,7 @@ workflows:
           xcode-project use-profiles
       - name: Build iOS IPA
         script: |
+          sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9]*/CURRENT_PROJECT_VERSION = $BUILD_NUMBER/g" ios/App/App.xcodeproj/project.pbxproj
           xcode-project build-ipa \
             --workspace "$XCODE_WORKSPACE" \
             --scheme "$XCODE_SCHEME"
