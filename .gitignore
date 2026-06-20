@@ -39,3 +39,6 @@ Thumbs.db
 
 # Capacitor specific (if any local overrides)
 # Note: ios/ and android/ folders should be committed, except their respective build/caches as defined in their own .gitignore files.
+
+# Local Certificates and Private Keys
+ios_distribution.*

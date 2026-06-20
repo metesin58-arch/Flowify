@@ -95,9 +95,7 @@ workflows:
       app_store_connect: codemagic # Must match the Developer Portal integration name in Codemagic UI
 
     environment:
-      ios_signing:
-        distribution_type: app_store # Prepares the build for App Store / TestFlight distribution
-        bundle_identifier: com.flowify.game
+      # Disabled ios_signing pre-validation block to allow dynamic profile creation via CLI
       vars:
         XCODE_WORKSPACE: "ios/App/App.xcworkspace"
         XCODE_SCHEME: "App"
