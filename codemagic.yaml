@@ -136,8 +136,8 @@ workflows:
       - name: Build iOS IPA
         script: |
           xcode-project build-ipa \
-            -w "$XCODE_WORKSPACE" \
-            -s "$XCODE_SCHEME"
+            --workspace "$XCODE_WORKSPACE" \
+            --scheme "$XCODE_SCHEME"
     artifacts:
       - ios/App/build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
