@@ -1,0 +1,93 @@
+# Codemagic CI/CD configuration for Flowify (Capacitor iOS)
+
+workflows:
+  ios-capacitor-workflow:
+    name: Flowify Capacitor iOS Workflow
+    max_build_duration: 120
+    instance_type: mac_mini_m2 # Use Apple Silicon Mac Mini for fast builds
+    
+    # Connection to Apple Developer Portal for Automatic Code Signing
+    # To use this, you must configure the App Store Connect integration in the Codemagic UI:
+    # 1. Go to Team Settings > Developer Portal.
+    # 2. Add your App Store Connect API key (Issuer ID, Key ID, and private key .p8 file).
+    # 3. Reference the integration name below (usually 'codemagic' or your custom name).
+    # integrations:
+    #   app_store_connect: codemagic
+
+    environment:
+      ios_signing:
+        distribution_type: app_store # Options: app_store, ad_hoc, development, enterprise
+        bundle_identifier: com.flowify.game
+      vars:
+        # Xcode configuration
+        XCODE_WORKSPACE: "ios/App/App.xcworkspace"
+        XCODE_SCHEME: "App"
+        # Node version
+        NODE_VERSION: "20.x"
+      node: latest
+      xcode: latest # Uses the latest Xcode version
+      cocoapods: default
+
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+
+    scripts:
+      - name: Set Node version
+        script: |
+          nvm use $NODE_VERSION || nvm install $NODE_VERSION
+      
+      - name: Install npm dependencies
+        script: |
+          npm ci
+      
+      - name: Build web application
+        script: |
+          npm run build
+      
+      - name: Sync Capacitor iOS platform
+        script: |
+          npx cap sync ios
+      
+      - name: Install CocoaPods dependencies
+        script: |
+          cd ios/App && pod install
+      
+      - name: Set up code signing
+        script: |
+          # If automatic code signing is enabled using the Developer Portal integration:
+          # keychain initialize
+          # app-store-connect fetch-signing-files "com.flowify.game" --type IOS_APP_STORE --create
+          # keychain add-certificates
+          # xcode-project use-profiles
+          
+          # If using manual code signing (uploaded certificates/profiles in Codemagic environment variables):
+          # See https://docs.codemagic.io/yaml-code-signing/signing-ios/
+          echo "Skip signing configuration if using automatic portal integration or signing via UI"
+
+      - name: Build iOS IPA
+        script: |
+          xcode-project build-ipa \
+            --workspace "$XCODE_WORKSPACE" \
+            --scheme "$XCODE_SCHEME" \
+            --clean-arguments="CLEAN=YES"
+            
+    artifacts:
+      - ios/App/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      # Optional: Publish to TestFlight or App Store
+      # app_store_connect:
+      #   auth: integration
+      #   submit_to_testflight: true
+      #   beta_groups:
+      #     - External Testers
+      email:
+        recipients:
+          - metesin58@gmail.com # Replace with your email address
+        on_failure: notify
+        on_success: notify
