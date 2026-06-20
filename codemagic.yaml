@@ -57,7 +57,7 @@ workflows:
           npm install
       - name: Patch AdMob compilation issue (Swift enum rename)
         script: |
-          sed -i '' 's/UMPConsentStatus/ConsentStatus/g' node_modules/@capacitor-community/admob/ios/Sources/AdMobPlugin/Consent/ConsentExecutor.swift
+          node scripts/patch-admob.cjs
       - name: Build web application
         script: |
           npm run build
@@ -119,7 +119,7 @@ workflows:
           npm install
       - name: Patch AdMob compilation issue (Swift enum rename)
         script: |
-          sed -i '' 's/UMPConsentStatus/ConsentStatus/g' node_modules/@capacitor-community/admob/ios/Sources/AdMobPlugin/Consent/ConsentExecutor.swift
+          node scripts/patch-admob.cjs
       - name: Build web application
         script: |
           npm run build
