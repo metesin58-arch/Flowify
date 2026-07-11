@@ -1,10 +1,10 @@
 {
-  "projectId": "gen-lang-client-0424862604",
-  "appId": "1:1025210898745:web:7aa1da72c925b499c670e8",
-  "apiKey": "AIzaSyBmqP0Gih9No2lyfTk0WGDeVBJrXBicZWc",
-  "authDomain": "gen-lang-client-0424862604.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-8b3d4db0-db7d-41df-8ead-9ea20f7d0d7e",
-  "storageBucket": "gen-lang-client-0424862604.firebasestorage.app",
-  "messagingSenderId": "1025210898745",
+  "projectId": "rhymelife00",
+  "appId": "1:36128275638:web:faef5af5a0e4b3b44cfa17",
+  "apiKey": "AIzaSyDS0Hr4x2FRA-_bDkYJyB12zxf27e32ChQ",
+  "authDomain": "rhymelife00.firebaseapp.com",
+  "firestoreDatabaseId": "(default)",
+  "storageBucket": "rhymelife00.firebasestorage.app",
+  "messagingSenderId": "36128275638",
   "measurementId": ""
 }
