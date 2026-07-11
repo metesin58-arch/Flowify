@@ -1,10 +1,10 @@
 {
-  "projectId": "rhymelife00",
-  "appId": "1:36128275638:web:faef5af5a0e4b3b44cfa17",
-  "apiKey": "AIzaSyDS0Hr4x2FRA-_bDkYJyB12zxf27e32ChQ",
-  "authDomain": "rhymelife00.firebaseapp.com",
+  "projectId": "flowify-ios-prod",
+  "appId": "1:334976689022:web:592e59342c45adc711c92f",
+  "apiKey": "AIzaSyBzDQrxyaCgmuBihcEqZ2qOwv8v3qxISuQ",
+  "authDomain": "flowify-ios-prod.firebaseapp.com",
   "firestoreDatabaseId": "(default)",
-  "storageBucket": "rhymelife00.firebasestorage.app",
-  "messagingSenderId": "36128275638",
-  "measurementId": ""
+  "storageBucket": "flowify-ios-prod.firebasestorage.app",
+  "messagingSenderId": "334976689022",
+  "measurementId": "G-5170Z9S72Z"
 }
