@@ -205,30 +205,36 @@ const GameContent: React.FC = () => {
             setPlayer({ ...INITIAL_STATS, ...JSON.parse(localData) });
         }
 
-        const statsRef = doc(db, 'users', currentUser.uid, 'stats', 'current');
-        unsubscribeStats = onSnapshot(statsRef, (snapshot) => {
-            clearTimeout(authTimeout);
-            if (snapshot.exists()) {
-                const cloudData = snapshot.data();
-                const syncedData = { ...INITIAL_STATS, ...cloudData };
-                if (syncedData.careerCash !== undefined) syncedData.cash = syncedData.careerCash;
-                
-                // Force sync Level with Fans
-                if (syncedData.monthly_listeners !== undefined) {
-                    syncedData.careerLevel = calculateLevel(syncedData.monthly_listeners);
-                }
+        try {
+          const statsRef = doc(db, 'users', currentUser.uid, 'stats', 'current');
+          unsubscribeStats = onSnapshot(statsRef, (snapshot) => {
+              clearTimeout(authTimeout);
+              if (snapshot.exists()) {
+                  const cloudData = snapshot.data();
+                  const syncedData = { ...INITIAL_STATS, ...cloudData };
+                  if (syncedData.careerCash !== undefined) syncedData.cash = syncedData.careerCash;
+                  
+                  // Force sync Level with Fans
+                  if (syncedData.monthly_listeners !== undefined) {
+                      syncedData.careerLevel = calculateLevel(syncedData.monthly_listeners);
+                  }
 
-                setPlayer(syncedData);
-                // Sync to local storage
-                localStorage.setItem(`flowify_player_${currentUser.uid}`, JSON.stringify(syncedData));
-            }
-            setAuthChecked(true);
-        }, (error) => {
-            clearTimeout(authTimeout);
-            console.error("Firestore onSnapshot error (Offline?):", error);
-            // If we have local data, we already set it above, so just mark auth as checked
-            setAuthChecked(true);
-        });
+                  setPlayer(syncedData);
+                  // Sync to local storage
+                  localStorage.setItem(`flowify_player_${currentUser.uid}`, JSON.stringify(syncedData));
+              }
+              setAuthChecked(true);
+          }, (error) => {
+              clearTimeout(authTimeout);
+              console.error("Firestore onSnapshot error (Offline?):", error);
+              // If we have local data, we already set it above, so just mark auth as checked
+              setAuthChecked(true);
+          });
+        } catch (err) {
+          console.error("Firestore initialization error:", err);
+          clearTimeout(authTimeout);
+          setAuthChecked(true);
+        }
       } else {
         clearTimeout(authTimeout);
         setPlayer(null);

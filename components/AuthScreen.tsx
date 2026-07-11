@@ -19,6 +19,7 @@ export const AuthScreen: React.FC = () => {
       } else {
         await loginEmail(email, password);
       }
+      setLoading(false);
     } catch (e: any) {
       console.error("Auth error:", e);
       let msg = "Bir hata oluştu.";
