@@ -1,6 +1,6 @@
 
 import { SongTrack, GameSequence, TriviaQuestion } from '../types';
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, CapacitorHttp } from '@capacitor/core';
 
 // Primary: Express Proxy API (Avoids CORS/Mixed Content on Production)
 const PROXY_API_URL = '/api/music';
@@ -18,18 +18,18 @@ const fetchFromProxy = async (term: string, limit: number = 25): Promise<SongTra
 
     let rawData: any = null;
 
-    // Direct iTunes API fetch on native platforms (to avoid relative URL proxy issues where CORS doesn't apply)
+    // Use CapacitorHttp on native platforms to bypass WKWebView CORS restrictions
     if (Capacitor.isNativePlatform()) {
         try {
             const url = `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=music&entity=song&limit=${limit}&country=TR&lang=tr_tr`;
-            const response = await fetch(url);
-            if (response.ok) {
-                rawData = await response.json();
+            const response = await CapacitorHttp.get({ url });
+            if (response.status === 200) {
+                rawData = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
             } else {
-                throw new Error(`iTunes API returned ${response.status}`);
+                throw new Error(`iTunes API returned status ${response.status}`);
             }
         } catch (err) {
-            console.error("Direct iTunes Fetch Failed:", err);
+            console.error("Direct native iTunes Fetch Failed:", err);
             return [];
         }
     } else {
