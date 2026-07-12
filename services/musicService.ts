@@ -1,5 +1,6 @@
 
 import { SongTrack, GameSequence, TriviaQuestion } from '../types';
+import { Capacitor } from '@capacitor/core';
 
 // Primary: Express Proxy API (Avoids CORS/Mixed Content on Production)
 const PROXY_API_URL = '/api/music';
@@ -17,19 +18,35 @@ const fetchFromProxy = async (term: string, limit: number = 25): Promise<SongTra
 
     let rawData: any = null;
 
-    // 1. Attempt Proxy Fetch
-    try {
-        const url = `${PROXY_API_URL}?term=${encodeURIComponent(term)}&limit=${limit}`;
-        const response = await fetch(url);
-
-        if (response.ok) {
-            rawData = await response.json();
-        } else {
-            throw new Error(`Proxy returned ${response.status}`);
+    // Direct iTunes API fetch on native platforms (to avoid relative URL proxy issues where CORS doesn't apply)
+    if (Capacitor.isNativePlatform()) {
+        try {
+            const url = `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=music&entity=song&limit=${limit}&country=TR&lang=tr_tr`;
+            const response = await fetch(url);
+            if (response.ok) {
+                rawData = await response.json();
+            } else {
+                throw new Error(`iTunes API returned ${response.status}`);
+            }
+        } catch (err) {
+            console.error("Direct iTunes Fetch Failed:", err);
+            return [];
         }
-    } catch (proxyError) {
-        console.error("Music Fetch Failed completely:", proxyError);
-        return [];
+    } else {
+        // Attempt Proxy Fetch for Web
+        try {
+            const url = `${PROXY_API_URL}?term=${encodeURIComponent(term)}&limit=${limit}`;
+            const response = await fetch(url);
+
+            if (response.ok) {
+                rawData = await response.json();
+            } else {
+                throw new Error(`Proxy returned ${response.status}`);
+            }
+        } catch (proxyError) {
+            console.error("Music Fetch Failed completely:", proxyError);
+            return [];
+        }
     }
 
     if (!rawData || !rawData.results || rawData.resultCount === 0) return [];

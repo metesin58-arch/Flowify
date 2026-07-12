@@ -568,6 +568,7 @@ const GameContent: React.FC = () => {
           backstory: backstory || 'street',
           personality: personality || 'humble'
       };
+      setPlayer(newP);
       savePlayerToCloud(user.uid, newP);
       setIsEditingCharacter(false);
   }} />;
