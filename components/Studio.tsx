@@ -465,50 +465,24 @@ export const Studio: React.FC<Props> = ({ player, updateStat, spendEnergy, onClo
     setPhase('generating');
     updateStat('cash', -ECONOMY.LYRIA_COST);
 
-    try {
-      const selectedTheme = selectedThemeIdx !== null ? SPEC_THEMES[selectedThemeIdx].title : "Sokak Çetesi";
-      
-      const response = await fetch("/api/gemini/generate-interactive-track", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt: storyPrompt,
-          theme: selectedTheme,
-          playerName: player.name
-        })
-      });
+    // Completely offline local generator (instantaneous, no API server required)
+    setTimeout(() => {
+      try {
+        const currentThemeIdx = selectedThemeIdx !== null ? selectedThemeIdx : 0;
+        const baseTemplate = SPEC_THEMES[currentThemeIdx].templates[0];
+        const customizedLyrics = baseTemplate
+          .replaceAll('{playerName}', player.name)
+          .replaceAll('Sokaklar soğuk', storyPrompt.length > 5 ? storyPrompt.slice(0, 30) : 'Sokaklar soğuk');
 
-      if (!response.ok) {
-        throw new Error("API isteği başarısız oldu");
-      }
-
-      const data = await response.json();
-      
-      if (data && data.lyrics) {
-        setLyricsText(data.lyrics);
-        if (data.preset) {
-          setAiPreset(data.preset);
-          setBpm(data.preset.bpm || 120);
-        }
+        setLyricsText(customizedLyrics);
+        setPresetFallback(currentThemeIdx);
         setPhase('preview');
-        notify("Flowify Yapay Zeka Stüdyo Kaydı Tamamlandı! 🔥", 'success');
-      } else {
-        throw new Error("Yetersiz yapay zeka çıktısı");
+        notify("Flowify Stüdyo Kaydı Hazır! 🔥", 'success');
+      } catch (err) {
+        console.error("Local track generation error:", err);
+        setPhase('preview');
       }
-    } catch (err) {
-      console.error("Yapay zeka sentezleme hatası, yerel yedek yükleniyor:", err);
-      // Beautiful local fallback
-      const currentThemeIdx = selectedThemeIdx !== null ? selectedThemeIdx : 0;
-      const baseTemplate = SPEC_THEMES[currentThemeIdx].templates[0];
-      const customizedLyrics = baseTemplate
-        .replaceAll('{playerName}', player.name)
-        .replaceAll('Sokaklar soğuk', storyPrompt.length > 5 ? storyPrompt.slice(0, 30) : 'Sokaklar soğuk');
-
-      setLyricsText(customizedLyrics);
-      setPresetFallback(currentThemeIdx);
-      setPhase('preview');
-      notify("Flowify Kaydı Tamamlandı! (Yedek Mod devreye girdi)", 'info');
-    }
+    }, 1000);
   };
 
   const setPresetFallback = (themeIdx: number) => {
