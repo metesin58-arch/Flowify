@@ -205,7 +205,7 @@ export const CharacterCreation: React.FC<Props> = ({ onCreate, isEditing = false
     <div className="fixed inset-0 z-[9999] bg-black flex flex-col items-center p-0 font-sans overflow-hidden">
       
       {/* 1. Header Navigation & Steps */}
-      <div className="pt-safe-top pt-6 w-full flex flex-col items-center shrink-0 z-10 bg-gradient-to-b from-black to-transparent pb-3 select-none">
+      <div className="w-full flex flex-col items-center shrink-0 z-10 bg-gradient-to-b from-black to-transparent pb-3 select-none" style={{ paddingTop: 'calc(var(--safe-top, 12px) + 8px)' }}>
           <div className="flex gap-2 mb-2">
               {[1, 2, 3, 4, 5].map(i => (
                   <div key={i} className={`h-1 rounded-full transition-all duration-500 ${i === step ? 'w-8 bg-[#1DB954]' : 'w-2 bg-white/10'}`}></div>

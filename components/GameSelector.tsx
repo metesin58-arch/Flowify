@@ -57,7 +57,7 @@ export const GameSelector: React.FC<Props> = ({ player, onSelectMode }) => {
           className="flex-1 relative w-full flex flex-col justify-center items-center py-4 cursor-pointer select-none transition-all duration-500 bg-gradient-to-b from-[#252055] via-[#151235] to-[#0A081C] hover:brightness-[1.12]"
         >
           {/* PROFILE CARD (Top Left Absolute) - Styled compactly */}
-          <div className="absolute top-3 left-3 z-[45] flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          <div className="absolute left-3 z-[45] flex items-center gap-2" style={{ top: 'calc(var(--safe-top, 12px) + 6px)' }} onClick={(e) => e.stopPropagation()}>
             {/* COMPACT INITIAL AVATAR */}
             <div className="w-8 h-8 rounded-full bg-black/60 border border-white/10 flex items-center justify-center font-[900] text-sm text-white tracking-tighter shadow-lg">
               {player.name ? player.name.charAt(0).toUpperCase() : 'R'}

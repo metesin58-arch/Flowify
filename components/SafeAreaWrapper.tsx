@@ -15,7 +15,7 @@ export const SafeAreaWrapper: React.FC<SafeAreaWrapperProps> = ({ children, clas
     <div 
       className={`flex-1 flex flex-col overflow-hidden w-full h-full relative ${className}`}
       style={{
-        paddingTop: 'env(safe-area-inset-top, 0px)',
+        paddingTop: 'var(--safe-top, 0px)',
         paddingLeft: 'env(safe-area-inset-left, 0px)',
         paddingRight: 'env(safe-area-inset-right, 0px)',
       }}

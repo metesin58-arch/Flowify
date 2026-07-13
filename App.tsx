@@ -631,14 +631,14 @@ const GameContent: React.FC = () => {
 
   if (showWelcomeTutorial && viewMode === 'selector') return <WelcomeTutorial onComplete={() => { localStorage.setItem('flowify_welcome_seen', 'true'); setShowWelcomeTutorial(false); }} />;
   if (viewMode === 'test_area') return <SafeAreaWrapper className="bg-black"><MiniGameTestArea onExit={() => setViewMode('selector')} /></SafeAreaWrapper>;
-  if (viewMode === 'selector') return <SafeAreaWrapper><GameSelector player={player} onSelectMode={setViewMode} /></SafeAreaWrapper>;
+  if (viewMode === 'selector') return <GameSelector player={player} onSelectMode={setViewMode} />;
   
   // Main App Layout
   return (
     <SafeAreaWrapper className="bg-black text-white">
       {/* GLOBAL HEADER - PREMIUM GLASSMORPHISM */}
       {!hideGlobalHeader && !activeIAPTab && (
-          <div className="absolute top-0 left-0 right-0 z-[100] px-3 py-2 flex justify-between items-start bg-gradient-to-b from-black/90 via-black/50 to-transparent pb-8 pointer-events-none">
+          <div className="absolute left-0 right-0 z-[100] px-3 flex justify-between items-start bg-gradient-to-b from-black/90 via-black/50 to-transparent pb-8 pointer-events-none" style={{ top: 0, paddingTop: 'calc(var(--safe-top, 12px) + 6px)' }}>
                  <div className="flex items-center gap-2 pointer-events-auto mt-1">
                      <button onClick={() => { playClickSound(); setViewMode('selector'); }} className="flex items-center gap-2 px-4 py-2 rounded-full bg-white text-black active:scale-95 transition-all shadow-lg font-black text-[10px] tracking-tight lowercase z-50">
                          <ArrowIcon dir="left" className="w-3 h-3 text-black" />

@@ -75,8 +75,7 @@ export const StartingCitySelector: React.FC<Props> = ({ onSelect, onBack }) => {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1200px] h-[800px] bg-[#1DB954]/5 rounded-full blur-[150px] opacity-50" />
       </div>
 
-      {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-50 p-6 flex flex-col items-center pointer-events-none">
+      <div className="absolute left-0 right-0 z-50 px-6 flex flex-col items-center pointer-events-none" style={{ top: 0, paddingTop: 'calc(var(--safe-top, 12px) + 8px)' }}>
         <div className="flex w-full justify-between items-center mb-4">
             <button 
                 onClick={onBack}

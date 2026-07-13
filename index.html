@@ -59,10 +59,28 @@
         },
       }
     </script>
+    <!-- Detect native platform immediately to avoid layout flashing -->
+    <script>
+      if (
+        window.Capacitor || 
+        window.location.protocol === 'capacitor:' || 
+        navigator.userAgent.toLowerCase().includes('capacitor')
+      ) {
+        document.documentElement.classList.add('platform-native');
+        window.addEventListener('DOMContentLoaded', () => {
+          document.body.classList.add('platform-native');
+        });
+      }
+    </script>
     <style>
       :root {
         --sat: env(safe-area-inset-top, 0px);
         --sab: env(safe-area-inset-bottom, 0px);
+        --safe-top: 16px;
+      }
+
+      .platform-native {
+        --safe-top: 50px;
       }
 
       html, body {
