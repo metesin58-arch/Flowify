@@ -54,8 +54,11 @@ export const GameSelector: React.FC<Props> = ({ player, onSelectMode }) => {
         {/* TOP HALF: CAREER MODE */}
         <div 
           onClick={() => handleSelect('career')}
-          className="flex-1 relative w-full flex flex-col justify-center items-center py-4 cursor-pointer select-none transition-all duration-500 bg-gradient-to-b from-[#252055] via-[#151235] to-[#0A081C] hover:brightness-[1.12]"
+          className="flex-1 relative w-full flex flex-col justify-center items-center py-4 cursor-pointer select-none transition-all duration-500 bg-gradient-to-b from-[#6D28D9] via-[#4C1D95] to-[#1E1B4B] hover:brightness-[1.15]"
         >
+          {/* Glowing radial light for career */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.35)_0%,transparent_70%)] pointer-events-none" />
+          
           {/* PROFILE CARD (Top Left Absolute) - Styled compactly */}
           <div className="absolute left-3 z-[45] flex items-center gap-2" style={{ top: 'calc(var(--safe-top, 12px) + 6px)' }} onClick={(e) => e.stopPropagation()}>
             {/* COMPACT INITIAL AVATAR */}
@@ -75,22 +78,22 @@ export const GameSelector: React.FC<Props> = ({ player, onSelectMode }) => {
 
           <div className="max-w-md w-full flex flex-col items-center gap-1 relative z-10 px-4 text-center mt-3">
             {/* STREAMLINED COMPACT MIC CIRCLE */}
-            <div className="w-14 h-14 sm:w-18 sm:h-18 rounded-full border border-white/5 bg-white/[0.02] flex items-center justify-center mb-2 shadow-[inset_0_0_8px_rgba(255,255,255,0.01)] transition-transform duration-500 hover:scale-105">
-              <MicIcon className="w-6 h-6 sm:w-7 sm:h-7 text-white/85" />
+            <div className="w-14 h-14 sm:w-18 sm:h-18 rounded-full border border-white/15 bg-white/[0.04] flex items-center justify-center mb-2 shadow-[0_4px_20px_rgba(139,92,246,0.3)] transition-transform duration-500 hover:scale-105">
+              <MicIcon className="w-6 h-6 sm:w-7 sm:h-7 text-white/95" />
             </div>
 
             {/* OPEN SAUCE COMPACT TITLE */}
             <h1 className="text-4xl xs:text-5xl sm:text-6xl font-[900] tracking-[-0.08em] leading-none text-white select-none drop-shadow-[0_4px_12px_rgba(0,0,0,0.7)] lowercase">
-              kariyer<span className="text-[#a594fd]/90">.</span>
+              kariyer<span className="text-[#c084fc]">.</span>
             </h1>
             
             {/* SUBTITLE */}
-            <p className="tracking-tight text-[10px] sm:text-xs font-bold text-[#A594FD]/70 mt-0.5 lowercase">
+            <p className="tracking-tight text-[10px] sm:text-xs font-bold text-[#c084fc]/80 mt-0.5 lowercase">
               dünya turnesi & albüm
             </p>
 
             {/* WEEK BUTTON / PILL */}
-            <div className="px-4 py-1 rounded-full bg-[#3B2D7F]/40 border border-[#7C63FF]/15 text-[9px] font-bold tracking-tight text-[#B2A2FF] lowercase mt-3 backdrop-blur-md shadow-md min-w-[90px] text-center">
+            <div className="px-4 py-1 rounded-full bg-[#3B2D7F]/60 border border-[#a855f7]/30 text-[9px] font-bold tracking-tight text-[#d8b4fe] lowercase mt-3 backdrop-blur-md shadow-md min-w-[90px] text-center">
               {player.week}. hafta
             </div>
           </div>
@@ -99,8 +102,11 @@ export const GameSelector: React.FC<Props> = ({ player, onSelectMode }) => {
         {/* BOTTOM HALF: ONLINE HUB */}
         <div 
           onClick={() => handleSelect('hub')}
-          className="flex-1 relative w-full flex flex-col justify-center items-center py-4 cursor-pointer select-none transition-all duration-500 bg-gradient-to-b from-[#113B1F] via-[#072110] to-[#030E07] hover:brightness-[1.12] border-t border-black/45"
+          className="flex-1 relative w-full flex flex-col justify-center items-center py-4 cursor-pointer select-none transition-all duration-500 bg-gradient-to-b from-[#059669] via-[#065F46] to-[#022C22] hover:brightness-[1.15] border-t border-black/45"
         >
+          {/* Glowing radial light for online hub */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(52,211,153,0.35)_0%,transparent_70%)] pointer-events-none" />
+          
           <div className="max-w-md w-full flex flex-col items-center gap-1 relative z-10 px-4 text-center">
             {/* STREAMLINED COMPACT USERS CONTAINER */}
             <div className="w-14 h-14 sm:w-18 sm:h-18 rounded-full border border-white/5 bg-white/[0.02] flex items-center justify-center mb-2 relative shadow-[inset_0_0_8px_rgba(255,255,255,0.01)]">
